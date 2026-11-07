@@ -6,6 +6,7 @@ const {
   getLiveOrders,
   getRiderHistory,
   getAllRiders,
+  getFeedbacks,
 } = require('../controllers/adminController');
 
 // Admin Authentication
@@ -13,6 +14,9 @@ router.post('/login', loginAdmin);
 
 // Dashboard Statistics & Active Dispatches
 router.get('/dashboard', getDashboardStats);
+
+// Customer Post-Order Feedback Records
+router.get('/feedbacks', getFeedbacks);
 
 // Live Orders (Real-time monitoring of all active orders and their assigned riders)
 router.get('/live-orders', getLiveOrders);

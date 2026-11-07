@@ -97,6 +97,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     final stats = _dashboardData?['stats'] as Map<String, dynamic>? ?? {};
     final riders = (_dashboardData?['riders'] as List<dynamic>?) ?? [];
+    final feedbacks = (_dashboardData?['feedbacks'] as List<dynamic>?) ?? [];
 
     final liveCount = stats['liveOrdersCount'] ?? 0;
     final totalOrders = stats['totalOrders'] ?? 0;
@@ -627,6 +628,197 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         onPressed: () => _callPhone(phone),
                         tooltip: 'Call Rider',
                       ),
+                  ],
+                ),
+              );
+            }).toList(),
+
+          const SizedBox(height: 24),
+
+          // Customer Ratings & Feedback Section with Full Details
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Text('⭐', style: TextStyle(fontSize: 16)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Customer Ratings & Feedback',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.star_rounded, size: 14, color: Color(0xFFD97706)),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${stats['averageRating'] ?? 5.0}★ (${feedbacks.length})',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF92400E)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          if (feedbacks.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Text(
+                'No customer feedback received yet.',
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              ),
+            )
+          else
+            ...feedbacks.map((f) {
+              final rating = (f['rating'] as num?)?.toInt() ?? 5;
+              final comment = f['comment'] ?? 'No comment';
+              final orderNum = f['orderNumber'] ?? 'MPM-ORD';
+              final customerPhone = f['customerPhone'] ?? '';
+              final riderName = f['riderName'] ?? 'Rider';
+              final riderPhone = f['riderPhone'] ?? '';
+              final orderStatus = (f['orderStatus'] ?? 'DELIVERED').toString().toUpperCase();
+              final isDelivered = orderStatus == 'DELIVERED';
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDelivered ? const Color(0xFFE2E8F0) : const Color(0xFFFECDD3),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: isDelivered ? const Color(0xFFECFDF5) : const Color(0xFFFFF1F2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isDelivered ? const Color(0xFFA7F3D0) : const Color(0xFFFECDD3),
+                                ),
+                              ),
+                              child: Text(
+                                isDelivered ? '✅ DELIVERED' : '❌ CANCELLED',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDelivered ? const Color(0xFF065F46) : const Color(0xFF9F1239),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '#$orderNum',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Star Rating Display
+                        Row(
+                          children: List.generate(5, (i) {
+                            return Icon(
+                              i < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                              size: 16,
+                              color: i < rating ? const Color(0xFFF59E0B) : const Color(0xFFCBD5E1),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Comment text
+                    Text(
+                      '"$comment"',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    const SizedBox(height: 8),
+                    // Full Details: Customer & Rider Phone + Calling
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Customer: ${customerPhone.isNotEmpty ? customerPhone : "Guest"}',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Rider: $riderName ${riderPhone.isNotEmpty ? "($riderPhone)" : ""}',
+                                style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            if (customerPhone.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.phone_rounded, color: Color(0xFF10B981), size: 18),
+                                tooltip: 'Call Customer ($customerPhone)',
+                                constraints: const BoxConstraints(),
+                                padding: const EdgeInsets.all(6),
+                                onPressed: () => _callPhone(customerPhone),
+                              ),
+                            if (riderPhone.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF0284C7), size: 18),
+                                tooltip: 'Call Rider ($riderPhone)',
+                                constraints: const BoxConstraints(),
+                                padding: const EdgeInsets.all(6),
+                                onPressed: () => _callPhone(riderPhone),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               );

@@ -109,6 +109,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   void initState() {
     super.initState();
     NotificationService().ensureDeviceRegistered(role: 'CUSTOMER');
+    NotificationService.onNotificationCountChanged.addListener(_onRemoteNotificationReceived);
     _loadStoredPreferences();
     _fetchLiveActiveRiders();
 
@@ -124,8 +125,22 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     });
   }
 
+  void _onRemoteNotificationReceived() async {
+    final notifs = await PreferencesService.getInAppNotifications();
+    if (mounted) {
+      setState(() => _inAppNotifications = notifs);
+      if (_activeOrder != null) {
+        _refreshActiveOrder();
+      }
+      if (_currentViewMode == 'rider' && _isRiderLoggedIn && _riderActiveTrip != null) {
+        _refreshRiderActiveTrip();
+      }
+    }
+  }
+
   @override
   void dispose() {
+    NotificationService.onNotificationCountChanged.removeListener(_onRemoteNotificationReceived);
     _pollingTimer?.cancel();
     _pickupDebounce?.cancel();
     _dropDebounce?.cancel();
@@ -987,6 +1002,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           if (wasCancelled && _showTrackingModal) {
             _showCustomerOrderCancelledDialog(cancelReason);
           }
+          final hasFeedback = await PreferencesService.isOrderFeedbackSubmitted(updated.id);
+          if (!hasFeedback && mounted) {
+            _showOrderFeedbackDialog(updated);
+          }
         }
       }
     } catch (e) {
@@ -1069,6 +1088,272 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             child: const Text('OK / Place New Order'),
           ),
         ],
+      ),
+    );
+  }
+
+  // Post-Order Feedback Bottom Sheet (Delivered or Cancelled)
+  Future<void> _showOrderFeedbackDialog(OrderModel order) async {
+    final alreadySubmitted = await PreferencesService.isOrderFeedbackSubmitted(order.id);
+    if (alreadySubmitted || !mounted) return;
+
+    int selectedRating = order.isDelivered ? 5 : 3;
+    final commentCtrl = TextEditingController();
+    final quickTagsDelivered = ['⚡ Fast Delivery', '🛵 Polite Rider', '📦 Well Packed', '📍 Exact Location'];
+    final quickTagsCancelled = ['⏳ Delayed Response', '❌ Order Delayed', '🔄 Changed Mind', '📞 Rider Unavailable'];
+    final tags = order.isDelivered ? quickTagsDelivered : quickTagsCancelled;
+    final selectedTags = <String>{};
+    bool isSubmitting = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F172A),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, -4)),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (order.isDelivered ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withOpacity(0.18),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          order.isDelivered ? Icons.star_rounded : Icons.feedback_outlined,
+                          color: order.isDelivered ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              order.isDelivered ? 'How was your delivery?' : 'Order Feedback',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              'Order #${order.orderNumber} • ${order.assignedRider?['name'] ?? 'ZIPPO Rider'}',
+                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Rating Stars
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        final starNumber = index + 1;
+                        final isFilled = starNumber <= selectedRating;
+                        return GestureDetector(
+                          onTap: () => setSheetState(() => selectedRating = starNumber),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Icon(
+                              isFilled ? Icons.star_rounded : Icons.star_outline_rounded,
+                              size: 38,
+                              color: isFilled ? const Color(0xFFF59E0B) : const Color(0xFF475569),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Text(
+                      selectedRating == 5
+                          ? '🌟 Excellent Experience!'
+                          : selectedRating == 4
+                              ? '👍 Very Good'
+                              : selectedRating == 3
+                                  ? '👌 Good'
+                                  : selectedRating == 2
+                                      ? '⚠️ Fair'
+                                      : '👎 Needs Improvement',
+                      style: const TextStyle(
+                        color: Color(0xFFFDE68A),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Quick Tag Chips
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: tags.map((tag) {
+                      final isSelected = selectedTags.contains(tag);
+                      return GestureDetector(
+                        onTap: () {
+                          setSheetState(() {
+                            if (isSelected) {
+                              selectedTags.remove(tag);
+                            } else {
+                              selectedTags.add(tag);
+                            }
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFF22C55E).withOpacity(0.2) : const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFF22C55E) : const Color(0xFF334155),
+                            ),
+                          ),
+                          child: Text(
+                            tag,
+                            style: TextStyle(
+                              color: isSelected ? const Color(0xFF86EFAC) : const Color(0xFFCBD5E1),
+                              fontSize: 11,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Comment Input
+                  TextField(
+                    controller: commentCtrl,
+                    maxLines: 2,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Any extra details or notes for the admin team...',
+                      hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                      filled: true,
+                      fillColor: const Color(0xFF1E293B),
+                      contentPadding: const EdgeInsets.all(12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFF334155)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFF334155)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFF22C55E)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF22C55E),
+                        foregroundColor: const Color(0xFF0F172A),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+                        elevation: 0,
+                      ),
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              setSheetState(() => isSubmitting = true);
+                              final combinedComment = [
+                                ...selectedTags,
+                                if (commentCtrl.text.trim().isNotEmpty) commentCtrl.text.trim(),
+                              ].join(' • ');
+
+                              final riderPhone = order.assignedRider?['phone'] ?? '';
+                              final riderName = order.assignedRider?['name'] ?? '';
+
+                              await _apiService.submitOrderFeedback(
+                                orderId: order.id,
+                                rating: selectedRating,
+                                comment: combinedComment.isEmpty ? 'Rated $selectedRating stars' : combinedComment,
+                                orderStatus: order.status,
+                                customerPhone: order.customerPhone,
+                                riderName: riderName,
+                                riderPhone: riderPhone,
+                              );
+
+                              await PreferencesService.saveOrderFeedbackSubmitted(order.id);
+                              if (!ctx.mounted) return;
+                              Navigator.pop(ctx);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Thank you! Your feedback was received by our supervisor.'),
+                                    backgroundColor: Color(0xFF16A34A),
+                                    duration: Duration(seconds: 3),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                      child: isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0F172A)),
+                            )
+                          : const Text(
+                              'Submit Feedback',
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -3341,24 +3626,24 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
+          mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 18),
+            Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 16),
             SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Notification deleted',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-              ),
+            Text(
+              'Notification removed',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF1E293B),
-        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF0F172A),
+        duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: SnackBarAction(
-          label: 'UNDO (2s)',
-          textColor: const Color(0xFF76C457),
+          label: 'UNDO',
+          textColor: const Color(0xFF22C55E),
           onPressed: () async {
             if (index >= 0 && index <= _inAppNotifications.length) {
               _inAppNotifications.insert(index, item);
@@ -3707,113 +3992,123 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ZippoLandingIntroScreen(),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            if (_currentViewMode != 'customer') {
+                              setState(() => _currentViewMode = 'customer');
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.asset(
-                              'assets/logo.png',
-                              cacheWidth: 90,
-                              cacheHeight: 90,
-                              width: 44,
-                              height: 44,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                width: 44,
-                                height: 44,
-                                color: const Color(0xFFF97316),
-                                child: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 24),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.asset(
+                                'assets/logo.png',
+                                cacheWidth: 90,
+                                cacheHeight: 90,
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  width: 40,
+                                  height: 40,
+                                  color: const Color(0xFFF97316),
+                                  child: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 22),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text(
-                                'ZIPPO',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 20,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFFEA580C), Color(0xFFF97316)],
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'ZIPPO',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 18,
+                                      letterSpacing: 0.8,
+                                    ),
                                   ),
-                                  borderRadius: BorderRadius.circular(9999),
-                                ),
-                                child: const Text(
-                                  'மேலப்பாளையம்',
-                                  style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900),
-                                ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFEA580C), Color(0xFFF97316)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(9999),
+                                    ),
+                                    child: const Text(
+                                      'மேலப்பாளையம்',
+                                      style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: _activeRidersCount > 0 ? const Color(0xFF22C55E) : const Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      _activeRidersCount > 0
+                                          ? '$_activeRidersCount ${_activeRidersCount == 1 ? 'Rider' : 'Riders'} Online'
+                                          : '0 Riders Online',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: _activeRidersCount > 0 ? const Color(0xFFA7DF92) : Colors.white70,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 10.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _activeRidersCount > 0 ? const Color(0xFF76C457) : const Color(0xFF94A3B8),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _activeRidersCount > 0
-                                    ? '$_activeRidersCount ${_activeRidersCount == 1 ? 'Rider' : 'Riders'} Available on duty'
-                                    : '0 Riders Online (Pool Standby)',
-                                style: TextStyle(
-                                  color: _activeRidersCount > 0 ? const Color(0xFFA7DF92) : Colors.white70,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 6),
 
                   // Header actions: Notification Bell & Discreet Rider Portal
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Dedicated Notification Bell with dynamic icon fill color (no circle dot badge)
+                      // Dedicated Notification Bell with vibrant green unread state
                       GestureDetector(
                         onTap: () async {
                           await PreferencesService.markNotificationsAsRead();
@@ -3830,12 +4125,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           height: 36,
                           decoration: BoxDecoration(
                             color: _hasUnreadNotifications
-                                ? const Color(0xFF76C457).withOpacity(0.18)
+                                ? const Color(0xFF22C55E).withOpacity(0.22)
                                 : const Color(0xFF1E293B).withOpacity(0.9),
                             border: Border.all(
                               color: _hasUnreadNotifications
-                                  ? const Color(0xFF76C457)
+                                  ? const Color(0xFF22C55E)
                                   : const Color(0xFF334155),
+                              width: _hasUnreadNotifications ? 1.5 : 1.0,
                             ),
                             shape: BoxShape.circle,
                           ),
@@ -3844,18 +4140,27 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 ? Icons.notifications_active_rounded
                                 : Icons.notifications_none_rounded,
                             color: _hasUnreadNotifications
-                                ? const Color(0xFF76C457)
+                                ? const Color(0xFF22C55E)
                                 : const Color(0xFF94A3B8),
-                            size: 18,
+                            size: 19,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
 
                       // Shield Trigger: Single Tap -> QR & Policy Sheet | Double Tap -> Rider/Admin Portal
                       GestureDetector(
                         onTap: () => _openAppDownloadAndPolicySheet(),
-                        onDoubleTap: () {
+                        onDoubleTap: () async {
+                          final isAdmin = await PreferencesService.isAdminLoggedIn();
+                          if (isAdmin) {
+                            if (!mounted) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const AdminShellScreen()),
+                            );
+                            return;
+                          }
                           setState(() => _currentViewMode = 'rider');
                           if (_isRiderLoggedIn) {
                             PreferencesService.saveLastViewMode('rider');
@@ -3872,7 +4177,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           child: const Icon(Icons.shield_outlined, color: Color(0xFF94A3B8), size: 16),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
 
                       // Direct Customer Support & Helpline Trigger
                       GestureDetector(
@@ -5232,6 +5537,23 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF59E0B),
+                              foregroundColor: const Color(0xFF0F172A),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+                            ),
+                            icon: const Icon(Icons.star_rounded, size: 18, color: Color(0xFF0F172A)),
+                            label: const Text('Rate Delivery Experience ⭐',
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                            onPressed: () => _showOrderFeedbackDialog(_activeOrder!),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF76C457),
@@ -5275,6 +5597,22 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         const Text('This order has been cancelled and closed.',
                             style: TextStyle(color: Color(0xFFE11D48), fontSize: 11)),
                         const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF9F1239),
+                              side: const BorderSide(color: Color(0xFFFECDD3)),
+                              padding: const EdgeInsets.symmetric(vertical: 11),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+                            ),
+                            icon: const Icon(Icons.feedback_outlined, size: 16),
+                            label: const Text('Give Feedback on Cancellation',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            onPressed: () => _showOrderFeedbackDialog(_activeOrder!),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -5569,6 +5907,38 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                FutureBuilder<bool>(
+                  future: PreferencesService.isAdminLoggedIn(),
+                  builder: (context, snapshot) {
+                    if (snapshot.data == true) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0F172A),
+                              foregroundColor: const Color(0xFF38BDF8),
+                              side: const BorderSide(color: Color(0xFF38BDF8), width: 1.2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            icon: const Icon(Icons.shield_rounded, size: 16, color: Color(0xFF38BDF8)),
+                            label: const Text('Admin Console Active (Tap to Open)',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const AdminShellScreen()),
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
                 const Text('PORTAL ACCESS PASSWORD (கடவுச்சொல்)',
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF475569))),
                 const SizedBox(height: 6),
@@ -5689,12 +6059,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           height: 34,
                           decoration: BoxDecoration(
                             color: _hasUnreadNotifications
-                                ? const Color(0xFF76C457).withOpacity(0.18)
+                                ? const Color(0xFF22C55E).withOpacity(0.22)
                                 : Colors.white.withOpacity(0.12),
                             border: Border.all(
                               color: _hasUnreadNotifications
-                                  ? const Color(0xFF76C457)
+                                  ? const Color(0xFF22C55E)
                                   : Colors.white24,
+                              width: _hasUnreadNotifications ? 1.5 : 1.0,
                             ),
                             shape: BoxShape.circle,
                           ),
@@ -5703,7 +6074,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 ? Icons.notifications_active_rounded
                                 : Icons.notifications_none_rounded,
                             color: _hasUnreadNotifications
-                                ? const Color(0xFF76C457)
+                                ? const Color(0xFF22C55E)
                                 : const Color(0xFF94A3B8),
                             size: 17,
                           ),
@@ -7090,17 +7461,7 @@ class _Circle270TextOutlinePainter extends CustomPainter {
     const startAngle = -math.pi * 0.75;
     const sweepAngle = math.pi * 1.5; // Exactly 270 degrees circular outline
 
-    // 1. Draw glowing 270° Arc Outline Track
-    final arcPaint = Paint()
-      ..color = const Color(0xFF76C457)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
-      ..strokeCap = StrokeCap.round;
-
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawArc(rect, startAngle, sweepAngle, false, arcPaint);
-
-    // 2. Draw Curved "★ CALL TO ORDER ★" Text along the 270° Circular Outline
+    // 2. Draw Curved "★ CALL TO ORDER ★" Text along the 270° Circular Outline (green line removed)
     const text = '★ CALL TO ORDER ★';
     const textStyle = TextStyle(
       color: Color(0xFF0F172A),

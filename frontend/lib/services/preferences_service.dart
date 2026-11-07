@@ -49,6 +49,24 @@ class PreferencesService {
     await prefs.remove(_keyCustomerActiveOrderId);
   }
 
+  // Feedback Submission Tracking
+  static const String _keyFeedbackSubmittedOrders = 'mpm_feedback_orders';
+
+  static Future<void> saveOrderFeedbackSubmitted(String orderId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_keyFeedbackSubmittedOrders) ?? [];
+    if (!list.contains(orderId)) {
+      list.add(orderId);
+      await prefs.setStringList(_keyFeedbackSubmittedOrders, list);
+    }
+  }
+
+  static Future<bool> isOrderFeedbackSubmitted(String orderId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_keyFeedbackSubmittedOrders) ?? [];
+    return list.contains(orderId);
+  }
+
   // Rider Active Order Persistence
   static Future<void> saveRiderActiveOrderId(String orderId) async {
     final prefs = await SharedPreferences.getInstance();

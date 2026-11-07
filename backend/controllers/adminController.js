@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Rider = require('../models/Rider');
+const Feedback = require('../models/Feedback');
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'mani2006';
 
@@ -128,6 +129,19 @@ exports.getDashboardStats = async (req, res) => {
       activeTrip: riderActiveTripMap[r._id.toString()] || null,
     }));
 
+    // Customer Post-Order Feedback Metrics
+    const recentFeedbacks = await Feedback.find({}).sort({ createdAt: -1 }).limit(10).lean();
+    const feedbackTotal = await Feedback.countDocuments({});
+    let averageRating = 5.0;
+    if (feedbackTotal > 0) {
+      const avgResult = await Feedback.aggregate([
+        { $group: { _id: null, avgRating: { $avg: '$rating' } } }
+      ]);
+      if (avgResult.length > 0 && avgResult[0].avgRating) {
+        averageRating = parseFloat(avgResult[0].avgRating.toFixed(1));
+      }
+    }
+
     return res.status(200).json({
       success: true,
       stats: {
@@ -145,8 +159,11 @@ exports.getDashboardStats = async (req, res) => {
         todayRevenue,
         todayCashRevenue,
         todayUpiRevenue,
+        feedbackTotal,
+        averageRating,
       },
       riders: enhancedRiders,
+      feedbacks: recentFeedbacks,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -260,6 +277,20 @@ exports.getAllRiders = async (req, res) => {
   try {
     const riders = await Rider.find({}).sort({ isOnline: -1, totalDeliveries: -1 });
     return res.status(200).json({ success: true, riders });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 6. Admin Customer Feedback Records with Full Details
+exports.getFeedbacks = async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find({}).sort({ createdAt: -1 }).limit(100).lean();
+    return res.status(200).json({
+      success: true,
+      count: feedbacks.length,
+      feedbacks,
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

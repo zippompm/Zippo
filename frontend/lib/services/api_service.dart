@@ -993,4 +993,57 @@ class ApiService {
       return [];
     }
   }
+
+  /// Submit customer post-order feedback (Delivered or Cancelled)
+  Future<Map<String, dynamic>> submitOrderFeedback({
+    required String orderId,
+    required int rating,
+    required String comment,
+    required String orderStatus,
+    String? customerPhone,
+    String? riderName,
+    String? riderPhone,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/orders/$orderId/feedback'),
+            headers: _headers,
+            body: jsonEncode({
+              'rating': rating,
+              'comment': comment,
+              'orderStatus': orderStatus,
+              if (customerPhone != null && customerPhone.isNotEmpty) 'customerPhone': customerPhone,
+              if (riderName != null && riderName.isNotEmpty) 'riderName': riderName,
+              if (riderPhone != null && riderPhone.isNotEmpty) 'riderPhone': riderPhone,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      final data = _safeJsonDecode(response.body);
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return data ?? {'success': true, 'message': 'Feedback received'};
+      }
+      return {'success': false, 'message': data?['message'] ?? 'Failed to submit feedback'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString().replaceAll('Exception: ', '')};
+    }
+  }
+
+  /// Fetch all customer feedbacks for Admin Console
+  Future<List<Map<String, dynamic>>> getAdminFeedbacks() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/admin/feedbacks'), headers: _headers)
+          .timeout(const Duration(seconds: 8));
+
+      final data = _safeJsonDecode(response.body);
+      if (response.statusCode == 200 && data != null && data['feedbacks'] is List) {
+        return List<Map<String, dynamic>>.from(data['feedbacks']);
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
 }

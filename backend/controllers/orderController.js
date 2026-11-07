@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Rider = require('../models/Rider');
 const Device = require('../models/Device');
+const Feedback = require('../models/Feedback');
 const { sendMilestoneNotification, sendBroadcastNotification, sendAdminSupervisorAlert } = require('../services/fcmService');
 
 /**
@@ -425,19 +426,22 @@ exports.completeDelivery = async (req, res) => {
     });
 
     // Notify Customer of successful completion
-    await sendMilestoneNotification({
-      token: order.customerFcmToken,
-      title: '✅ Order Delivered!',
-      body: `Your order #${order.orderNumber} has been delivered successfully. Thank you for choosing ZIPPO!`,
-      data: {
-        orderId: order._id.toString(),
-        orderNumber: order.orderNumber,
-        status: 'DELIVERED',
-        callerPhone: order.assignedRider.phone,
-      },
-      orderId: order._id,
-      recipientPhone: order.customerPhone,
-    });
+    const customerToken = await resolveCustomerToken(order);
+    if (customerToken) {
+      await sendMilestoneNotification({
+        token: customerToken,
+        title: '✅ Order Delivered!',
+        body: `Your order #${order.orderNumber} has been delivered successfully. Thank you for choosing ZIPPO!`,
+        data: {
+          orderId: order._id.toString(),
+          orderNumber: order.orderNumber,
+          status: 'DELIVERED',
+          callerPhone: order.assignedRider ? order.assignedRider.phone : '',
+        },
+        orderId: order._id,
+        recipientPhone: order.customerPhone,
+      }).catch((err) => console.error('[Customer Delivered Notification Error]:', err.message));
+    }
 
     return res.status(200).json({
       success: true,
@@ -533,6 +537,64 @@ exports.cancelOrder = async (req, res) => {
       order,
     });
   } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 9. Submit Customer Post-Order Feedback (Delivered or Cancelled)
+exports.submitOrderFeedback = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { rating, comment, customerPhone, riderName, riderPhone, orderStatus } = req.body;
+
+    const order = await Order.findById(orderId).populate('assignedRider', 'name phone');
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const resolvedOrderNumber = order.orderNumber || 'MPM-ORD';
+    const resolvedCustomerPhone = (customerPhone || order.customerPhone || '').trim();
+    const resolvedRiderName = riderName || (order.assignedRider ? order.assignedRider.name : 'Unassigned Rider');
+    const resolvedRiderPhone = riderPhone || (order.assignedRider ? order.assignedRider.phone : '');
+    const resolvedRating = Math.max(1, Math.min(5, parseInt(rating, 10) || 5));
+    const resolvedComment = (comment || '').trim();
+    const resolvedStatus = orderStatus || order.status || 'DELIVERED';
+
+    const feedback = await Feedback.create({
+      orderId: order._id,
+      orderNumber: resolvedOrderNumber,
+      customerPhone: resolvedCustomerPhone,
+      riderName: resolvedRiderName,
+      riderPhone: resolvedRiderPhone,
+      rating: resolvedRating,
+      comment: resolvedComment,
+      orderStatus: resolvedStatus,
+    });
+
+    // Notify Admin Supervisor with full feedback details
+    const stars = '⭐'.repeat(resolvedRating);
+    sendAdminSupervisorAlert({
+      title: `${stars} Customer Feedback (#${resolvedOrderNumber})`,
+      body: `Customer (${resolvedCustomerPhone || 'Guest'}) rated ${resolvedRating}★: "${resolvedComment || 'No comment'}". Rider: ${resolvedRiderName}. Status: ${resolvedStatus}.`,
+      data: {
+        type: 'CUSTOMER_FEEDBACK',
+        orderId: order._id.toString(),
+        orderNumber: resolvedOrderNumber,
+        rating: String(resolvedRating),
+        comment: resolvedComment,
+        riderName: resolvedRiderName,
+        customerPhone: resolvedCustomerPhone,
+        status: resolvedStatus,
+      },
+    }).catch((err) => console.error('[Supervisor Feedback Alert Error]:', err.message));
+
+    return res.status(201).json({
+      success: true,
+      message: 'Thank you for your valuable feedback!',
+      feedback,
+    });
+  } catch (error) {
+    console.error('[Submit Feedback Error]:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

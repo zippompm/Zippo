@@ -118,18 +118,6 @@ const sendMilestoneNotification = async ({
         ...(data.isRider
           ? { vibrateTimingsMillis: [0, 600, 200, 600, 200, 600, 400, 800] }
           : {}),
-        // Direct Action: Call Rider or Call Customer
-        ...(data.callerPhone
-          ? {
-              notificationActions: [
-                {
-                  action: 'ACTION_CALL_DIRECT',
-                  title: `Call (${data.callerPhone})`,
-                  icon: 'ic_call',
-                },
-              ],
-            }
-          : {}),
       },
     },
   };

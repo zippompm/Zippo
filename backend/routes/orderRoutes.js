@@ -10,6 +10,7 @@ const {
   updateMilestone,
   completeDelivery,
   cancelOrder,
+  submitOrderFeedback,
 } = require('../controllers/orderController');
 
 // Guest Customer Endpoints
@@ -18,6 +19,7 @@ router.get('/customer/:phone/active', getCustomerActiveOrder);
 router.get('/customer/:phone', getCustomerOrders);
 router.get('/:id', getOrderById);
 router.post('/:orderId/cancel', cancelOrder);
+router.post('/:orderId/feedback', submitOrderFeedback);
 
 // Rider Order Operations
 router.get('/pool/available', getAvailableOrders);

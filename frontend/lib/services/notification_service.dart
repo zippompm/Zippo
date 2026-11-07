@@ -90,6 +90,9 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
+  /// Real-time notifier that fires whenever an FCM alert arrives in foreground
+  static final ValueNotifier<int> onNotificationCountChanged = ValueNotifier<int>(0);
+
   FirebaseMessaging? get _fcm {
     try {
       if (Firebase.apps.isNotEmpty) {
@@ -195,6 +198,7 @@ class NotificationService {
               type: data['type']?.toString(),
               orderId: data['order_id']?.toString(),
             );
+            onNotificationCountChanged.value++;
             final callerPhone = data['caller_phone'] ?? '';
             final orderId = data['order_id'] ?? '';
             final isRiderAlert = data['isRider'] == 'true' || data['isRider'] == true;
