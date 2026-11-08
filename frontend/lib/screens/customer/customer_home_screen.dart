@@ -824,7 +824,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     }
 
     // Associate customer phone with device FCM token seamlessly
-    NotificationService().ensureDeviceRegistered(role: 'CUSTOMER', phone: effectivePhone);
+    await NotificationService().ensureDeviceRegistered(role: 'CUSTOMER', phone: effectivePhone);
 
     final isBuy = _activeTab == 'buy';
 
@@ -1475,6 +1475,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
       await PreferencesService.saveRiderSession(id: rider.id, name: rider.name, phone: rider.phone);
       await PreferencesService.saveLastViewMode('rider');
+      await NotificationService().ensureDeviceRegistered(role: 'RIDER', phone: rider.phone);
 
       setState(() {
         _loggedInRider = rider;
@@ -1498,7 +1499,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     try {
       final isOnline = await _apiService.toggleOnlineStatus(_loggedInRider!.id, val);
       setState(() => _isRiderOnline = isOnline);
-      if (isOnline) { _fetchRiderPool(); _syncRiderCompletedTrips(); }
+      if (isOnline) {
+        await NotificationService().ensureDeviceRegistered(role: 'RIDER', phone: _loggedInRider!.phone);
+        _fetchRiderPool();
+        _syncRiderCompletedTrips();
+      }
       _fetchLiveActiveRiders();
     } catch (_) {}
   }

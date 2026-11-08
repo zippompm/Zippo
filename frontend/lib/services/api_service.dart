@@ -97,7 +97,7 @@ class ApiService {
             headers: _headers,
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 15));
 
       final data = _safeJsonDecode(response.body);
       if (response.statusCode == 201 && data != null && data['success'] == true) {
@@ -108,43 +108,14 @@ class ApiService {
           'order': OrderModel.fromJson(data['order']),
           'whatsappTicket': (data['whatsappTicket'] as String?) ?? '🛵 ZIPPO Dispatch Order',
         };
+      } else if (data != null && data['message'] != null) {
+        throw Exception(data['message']);
+      } else {
+        throw Exception('Server returned status ${response.statusCode}');
       }
-    } catch (_) {}
-
-    // Resilient fallback for local testing / offline dummy orders:
-    final dateCode = DateTime.now().toIso8601String().substring(2, 10).replaceAll('-', '');
-    final randCode = 1000 + (DateTime.now().millisecond * 7 % 9000);
-    final dummyNumber = 'ZIPPO-$dateCode-$randCode';
-    final dummyPin = '${1000 + (DateTime.now().microsecond % 9000)}';
-    final dummyJson = {
-      '_id': 'ord_${DateTime.now().millisecondsSinceEpoch}',
-      'orderNumber': dummyNumber,
-      'customerName': payload['customerName'] ?? 'Customer',
-      'customerPhone': payload['customerPhone'] ?? '9876543210',
-      'pickupPhone': payload['pickupPhone'] ?? payload['customerPhone'] ?? '9876543210',
-      'dropPhone': payload['dropPhone'] ?? payload['customerPhone'] ?? '9876543210',
-      'orderType': payload['orderType'] ?? 'PICKUP_DROP',
-      'category': payload['category'] ?? 'Custom',
-      'itemsList': payload['itemsList'] ?? ['Essential Package'],
-      'shopName': payload['shopName'] ?? '',
-      'budget': payload['budget'] ?? 0,
-      'isUrgent': payload['isUrgent'] ?? false,
-      'pickupAddress': payload['pickupAddress'] ?? 'Melapalayam Center',
-      'dropAddress': payload['dropAddress'] ?? 'Melapalayam Landmark',
-      'status': 'ORDER_PLACED',
-      'assignedRider': null,
-      'deliveryPin': dummyPin,
-      'isOtpBypassed': false,
-      'fare': payload['calculatedFare'] ?? payload['fare'] ?? 30,
-      'estimatedDistanceKm': payload['estimatedDistanceKm'] ?? 2.0,
-      'paymentMode': 'Cash',
-      'createdAt': DateTime.now().toIso8601String(),
-    };
-    await PreferencesService.saveOrderToStore(dummyJson);
-    return {
-      'order': OrderModel.fromJson(dummyJson),
-      'whatsappTicket': '🛵 *ZIPPO DISPATCH*\nOrder: #$dummyNumber',
-    };
+    } catch (e) {
+      rethrow;
+    }
   }
 
   // 3. Get Order by ID

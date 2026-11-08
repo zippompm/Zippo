@@ -33,7 +33,16 @@ const resolveCustomerToken = async (order) => {
 const notifyOnlineRiders = async ({ title, body, orderId, orderNumber }) => {
   try {
     const onlineRiders = await Rider.find({ isOnline: true }).select('fcmToken phone');
-    const riderDevices = await Device.find({ role: 'RIDER', notificationsEnabled: true }).select('fcmToken phone');
+    const onlinePhones = onlineRiders.map((r) => r.phone).filter(Boolean);
+    const cleanPhones = onlinePhones.map((p) => p.replace(/\D/g, '').slice(-10)).filter(Boolean);
+
+    const riderDevices = await Device.find({
+      $or: [
+        { role: 'RIDER', notificationsEnabled: true },
+        ...(onlinePhones.length > 0 ? [{ phone: { $in: onlinePhones }, notificationsEnabled: true }] : []),
+        ...(cleanPhones.length > 0 ? [{ phone: { $regex: new RegExp(`(${cleanPhones.join('|')})$`) }, notificationsEnabled: true }] : []),
+      ],
+    }).select('fcmToken phone');
 
     const tokenSet = new Set();
     onlineRiders.forEach((r) => { if (r.fcmToken && r.fcmToken.trim().length > 10) tokenSet.add(r.fcmToken.trim()); });
@@ -72,7 +81,7 @@ const generateOrderNumber = async () => {
 
   try {
     const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
-    const lastOrder = await Order.findOne({ orderNumber: regex }).sort({ createdAt: -1 });
+    const lastOrder = await Order.findOne({ orderNumber: regex }).sort({ orderNumber: -1 });
     let seq = 1;
     if (lastOrder && lastOrder.orderNumber) {
       const match = lastOrder.orderNumber.match(/-(\d+)$/);
@@ -80,9 +89,14 @@ const generateOrderNumber = async () => {
         seq = parseInt(match[1], 10) + 1;
       }
     }
-    return `${prefix}${String(seq).padStart(4, '0')}`;
+    let candidate = `${prefix}${String(seq).padStart(4, '0')}`;
+    while (await Order.exists({ orderNumber: candidate })) {
+      seq++;
+      candidate = `${prefix}${String(seq).padStart(4, '0')}`;
+    }
+    return candidate;
   } catch (_) {
-    const fallbackSeq = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
+    const fallbackSeq = String(Date.now()).slice(-4);
     return `${prefix}${fallbackSeq}`;
   }
 };
@@ -163,7 +177,7 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing mandatory customer or drop details' });
     }
 
-    if (orderType === 'PICKUP_DROP' && !pickupAddress) {
+    if (orderType === 'PICKUP_DROP' && (!pickupAddress || pickupAddress.toString().trim().length === 0)) {
       return res.status(400).json({ success: false, message: 'Pickup address is required for Pickup & Drop' });
     }
 

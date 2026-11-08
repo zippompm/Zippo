@@ -86,6 +86,9 @@ const sendMilestoneNotification = async ({
     return { success: true, simulated: true };
   }
 
+  const isRiderAlert = data.isRider === 'true' || data.isRider === true;
+  const isAdminAlert = data.isAdmin === 'true' || data.isAdmin === true;
+
   const message = {
     token: token,
     notification: {
@@ -102,9 +105,9 @@ const sendMilestoneNotification = async ({
     android: {
       priority: 'high',
       notification: {
-        channelId: data.isRider
+        channelId: isRiderAlert
           ? 'zippo_rider_dispatch_alerts'
-          : data.isAdmin
+          : isAdminAlert
           ? 'zippo_admin_supervisor_alerts'
           : 'melapalayam_delivery_milestones',
         sound: 'default',
@@ -112,10 +115,10 @@ const sendMilestoneNotification = async ({
         visibility: 'public',
         defaultSound: true,
         ticker: title,
-        color: data.isRider ? '#22C55E' : data.isAdmin ? '#F59E0B' : '#76C457',
+        color: isRiderAlert ? '#22C55E' : isAdminAlert ? '#F59E0B' : '#76C457',
         // Distinctive heavy double-vibration for riders so it wakes up pocket even in silence/motion!
-        defaultVibrateTimings: !data.isRider,
-        ...(data.isRider
+        defaultVibrateTimings: !isRiderAlert,
+        ...(isRiderAlert
           ? { vibrateTimingsMillis: [0, 600, 200, 600, 200, 600, 400, 800] }
           : {}),
       },
@@ -173,6 +176,9 @@ const sendBroadcastNotification = async ({
   let totalFailure = 0;
   const BATCH_SIZE = 500;
 
+  const isRiderAlert = data.isRider === 'true' || data.isRider === true;
+  const isAdminAlert = data.isAdmin === 'true' || data.isAdmin === true;
+
   for (let i = 0; i < uniqueTokens.length; i += BATCH_SIZE) {
     const batchTokens = uniqueTokens.slice(i, i + BATCH_SIZE);
 
@@ -191,13 +197,21 @@ const sendBroadcastNotification = async ({
       android: {
         priority: 'high',
         notification: {
-          channelId: 'melapalayam_delivery_milestones',
+          channelId: isRiderAlert
+            ? 'zippo_rider_dispatch_alerts'
+            : isAdminAlert
+            ? 'zippo_admin_supervisor_alerts'
+            : 'melapalayam_delivery_milestones',
           sound: 'default',
           priority: 'max',
           visibility: 'public',
           defaultSound: true,
-          defaultVibrateTimings: true,
           ticker: title,
+          color: isRiderAlert ? '#22C55E' : isAdminAlert ? '#F59E0B' : '#76C457',
+          defaultVibrateTimings: !isRiderAlert,
+          ...(isRiderAlert
+            ? { vibrateTimingsMillis: [0, 600, 200, 600, 200, 600, 400, 800] }
+            : {}),
         },
       },
     };

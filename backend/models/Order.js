@@ -125,7 +125,7 @@ const orderSchema = new mongoose.Schema(
 );
 
 // Auto-generate human-readable order number if not supplied: odr-DDMMYY-0001
-orderSchema.pre('validate', async function (next) {
+orderSchema.pre('validate', async function () {
   if (!this.orderNumber) {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
@@ -136,7 +136,7 @@ orderSchema.pre('validate', async function (next) {
 
     try {
       const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
-      const lastOrder = await this.constructor.findOne({ orderNumber: regex }).sort({ createdAt: -1 });
+      const lastOrder = await this.constructor.findOne({ orderNumber: regex }).sort({ orderNumber: -1 });
       let seq = 1;
       if (lastOrder && lastOrder.orderNumber) {
         const match = lastOrder.orderNumber.match(/-(\d+)$/);
@@ -144,16 +144,20 @@ orderSchema.pre('validate', async function (next) {
           seq = parseInt(match[1], 10) + 1;
         }
       }
-      this.orderNumber = `${prefix}${String(seq).padStart(4, '0')}`;
+      let candidate = `${prefix}${String(seq).padStart(4, '0')}`;
+      while (await this.constructor.exists({ orderNumber: candidate })) {
+        seq++;
+        candidate = `${prefix}${String(seq).padStart(4, '0')}`;
+      }
+      this.orderNumber = candidate;
     } catch (_) {
-      const fallbackSeq = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
+      const fallbackSeq = String(Date.now()).slice(-4);
       this.orderNumber = `${prefix}${fallbackSeq}`;
     }
   }
   if (!this.deliveryPin) {
     this.deliveryPin = Math.floor(1000 + Math.random() * 9000).toString();
   }
-  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);
