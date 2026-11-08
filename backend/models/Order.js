@@ -33,8 +33,8 @@ const orderSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['Food', 'Meat', 'Medicines', 'Documents', 'Tailoring', 'Custom', 'BuyForMe'],
       default: 'Custom',
+      trim: true,
     },
     itemsList: {
       type: [String],
@@ -124,12 +124,31 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-// Auto-generate human-readable order number if not supplied
-orderSchema.pre('validate', function (next) {
+// Auto-generate human-readable order number if not supplied: odr-DDMMYY-0001
+orderSchema.pre('validate', async function (next) {
   if (!this.orderNumber) {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const dateCode = new Date().toISOString().slice(2, 10).replace(/-/g, '');
-    this.orderNumber = `ZIPPO-${dateCode}-${randomSuffix}`;
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const mon = String(now.getMonth() + 1).padStart(2, '0');
+    const yr = String(now.getFullYear()).slice(-2);
+    const dateStr = `${day}${mon}${yr}`;
+    const prefix = `odr-${dateStr}-`;
+
+    try {
+      const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
+      const lastOrder = await this.constructor.findOne({ orderNumber: regex }).sort({ createdAt: -1 });
+      let seq = 1;
+      if (lastOrder && lastOrder.orderNumber) {
+        const match = lastOrder.orderNumber.match(/-(\d+)$/);
+        if (match) {
+          seq = parseInt(match[1], 10) + 1;
+        }
+      }
+      this.orderNumber = `${prefix}${String(seq).padStart(4, '0')}`;
+    } catch (_) {
+      const fallbackSeq = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
+      this.orderNumber = `${prefix}${fallbackSeq}`;
+    }
   }
   if (!this.deliveryPin) {
     this.deliveryPin = Math.floor(1000 + Math.random() * 9000).toString();

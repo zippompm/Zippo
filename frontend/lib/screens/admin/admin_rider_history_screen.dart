@@ -520,159 +520,524 @@ class _AdminRiderHistoryScreenState extends State<AdminRiderHistoryScreen> {
   Widget _buildModernHistoryCard(OrderModel order) {
     final isDelivered = order.status == 'DELIVERED';
     final hasRider = order.assignedRider != null && order.riderName != null;
+    final isBuy = order.orderType == 'BUY_FOR_ME';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: isDelivered ? const Color(0xFFE2E8F0) : const Color(0xFFFECACA)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Card Header Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDelivered ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isDelivered ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isDelivered ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                            size: 12,
-                            color: isDelivered ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isDelivered ? 'DELIVERED' : 'CANCELLED',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
+    return InkWell(
+      onTap: () => _showOrderFullDetailsSheet(order),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: isDelivered ? const Color(0xFFE2E8F0) : const Color(0xFFFECACA)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Card Header Bar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDelivered ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDelivered ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isDelivered ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                              size: 12,
                               color: isDelivered ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
                             ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isDelivered ? 'DELIVERED' : 'CANCELLED',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: isDelivered ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('#${order.orderNumber}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A))),
+                    ],
+                  ),
+                  Text(
+                    '₹${order.fare}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                      color: isDelivered ? const Color(0xFF15803D) : const Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Service & Category
+                  Row(
+                    children: [
+                      Icon(
+                        isBuy ? Icons.shopping_bag_outlined : Icons.inventory_2_outlined,
+                        size: 13,
+                        color: const Color(0xFF0284C7),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          isBuy
+                              ? 'Buy For Me (${(order.shopName != null && order.shopName!.isNotEmpty) ? order.shopName : order.category})'
+                              : 'Pick & Deliver (${order.category})',
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Color(0xFF0284C7)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Rider Section
+                  Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDelivered ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.two_wheeler_rounded, size: 18, color: isDelivered ? const Color(0xFF2563EB) : const Color(0xFF94A3B8)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              hasRider ? 'Fulfilled by: ${order.riderName}' : 'No Rider Assigned',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Color(0xFF0F172A)),
+                            ),
+                            if (hasRider && order.riderPhone != null)
+                              Text(order.riderPhone!, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                      if (hasRider && order.riderPhone != null)
+                        IconButton(
+                          icon: const Icon(Icons.phone_rounded, size: 18, color: Color(0xFF0284C7)),
+                          onPressed: () => _callPhone(order.riderPhone),
+                          tooltip: 'Call Rider',
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Customer & Drop Address
+                  Text(
+                    'Customer: ${order.customerName} (${order.customerPhone})',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Delivery Landmark: ${order.dropAddress}', style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
+                  if (order.itemsList.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text('Items: ${order.itemsList.join(", ")}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF1E293B))),
+                  ],
+                  const SizedBox(height: 8),
+
+                  // Footer with Date & PIN verification status
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatFullDateTime(order.completedAt ?? order.createdAt),
+                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                      ),
+                      if (isDelivered)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: order.isOtpBypassed ? const Color(0xFFFEF3C7) : const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(6),
                           ),
+                          child: Text(
+                            order.isOtpBypassed ? '⚠️ Emergency Bypass' : '🔒 Verified PIN',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: order.isOtpBypassed ? const Color(0xFFB45309) : const Color(0xFF15803D),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Text('Tap to view full order details ▼', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showOrderFullDetailsSheet(OrderModel order) {
+    final isDelivered = order.status == 'DELIVERED';
+    final isCancelled = order.status == 'CANCELLED';
+    final isBuy = order.orderType == 'BUY_FOR_ME';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.90),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(width: 44, height: 4.5, decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(999))),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.receipt_long_rounded, size: 20, color: Color(0xFF0284C7)),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('#${order.orderNumber}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A))),
+                            Text(isBuy ? 'Buy For Me Order' : 'Pick & Deliver Order', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+              ),
+              const Divider(height: 20, color: Color(0xFFE2E8F0)),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+                  children: [
+                    // Status & Fare
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isDelivered ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  isDelivered ? '✅ DELIVERED' : '❌ CANCELLED',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: isDelivered ? const Color(0xFF15803D) : const Color(0xFFDC2626)),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(order.paymentMode == 'UPI' ? '📱 UPI Payment' : '💵 Cash on Delivery', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                            ],
+                          ),
+                          Text('₹${order.fare}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF15803D))),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text('#${order.orderNumber}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A))),
-                  ],
-                ),
-                Text(
-                  '₹${order.fare}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                    color: isDelivered ? const Color(0xFF15803D) : const Color(0xFF94A3B8),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                    const SizedBox(height: 12),
 
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Rider Section
-                Row(
-                  children: [
+                    // Timestamps Card
                     Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: isDelivered ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
-                        shape: BoxShape.circle,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF0284C7)),
+                              const SizedBox(width: 8),
+                              const Text('Placed: ', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              Expanded(child: Text(_formatFullDateTime(order.createdAt), style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)))),
+                            ],
+                          ),
+                          if (order.completedAt != null) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.check_circle_outline_rounded, size: 14, color: Color(0xFF15803D)),
+                                const SizedBox(width: 8),
+                                const Text('Delivered: ', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                                Expanded(child: Text(_formatFullDateTime(order.completedAt!), style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF15803D)))),
+                              ],
+                            ),
+                          ],
+                          if (isCancelled && order.cancellationReason != null) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFFDC2626)),
+                                const SizedBox(width: 8),
+                                const Text('Reason: ', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFDC2626))),
+                                Expanded(child: Text(order.cancellationReason!, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFB91C1C)))),
+                              ],
+                            ),
+                          ],
+                        ],
                       ),
-                      child: Icon(Icons.two_wheeler_rounded, size: 18, color: isDelivered ? const Color(0xFF2563EB) : const Color(0xFF94A3B8)),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
+                    const SizedBox(height: 12),
+
+                    // Items Checklist Section
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFE2E8F0))),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            hasRider ? 'Fulfilled by: ${order.riderName}' : 'No Rider Assigned',
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Color(0xFF0F172A)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(isBuy ? Icons.shopping_basket_rounded : Icons.inventory_2_rounded, size: 16, color: const Color(0xFF0284C7)),
+                                  const SizedBox(width: 6),
+                                  Text(isBuy ? 'ITEMS TO BUY & DELIVER' : 'PACKAGE ITEMS', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 0.5)),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
+                                child: Text(order.category, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                              ),
+                            ],
                           ),
-                          if (hasRider && order.riderPhone != null)
-                            Text(order.riderPhone!, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          if (isBuy && order.shopName != null && order.shopName!.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(8)),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.storefront_rounded, size: 14, color: Color(0xFF0284C7)),
+                                  const SizedBox(width: 6),
+                                  Expanded(child: Text('Store: ${order.shopName}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF0369A1)))),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          for (final it in (order.itemsList.isNotEmpty ? order.itemsList : [order.category]))
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF10B981))),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(it, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)))),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                    if (hasRider && order.riderPhone != null)
-                      IconButton(
-                        icon: const Icon(Icons.phone_rounded, size: 18, color: Color(0xFF0284C7)),
-                        onPressed: () => _callPhone(order.riderPhone),
-                        tooltip: 'Call Rider',
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                    const SizedBox(height: 12),
 
-                // Customer & Drop Address
-                Text(
-                  'Customer: ${order.customerName} (${order.customerPhone})',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
-                ),
-                const SizedBox(height: 4),
-                Text('Delivery Landmark: ${order.dropAddress}', style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
-                if (order.itemsList.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text('Items: ${order.itemsList.join(", ")}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                ],
-                const SizedBox(height: 8),
-
-                // Footer with Date & PIN verification status
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatDate(order.createdAt),
-                      style: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
-                    ),
-                    if (isDelivered)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: order.isOtpBypassed ? const Color(0xFFFEF3C7) : const Color(0xFFF0FDF4),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          order.isOtpBypassed ? '⚠️ Emergency Bypass' : '🔒 Verified PIN',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.bold,
-                            color: order.isOtpBypassed ? const Color(0xFFB45309) : const Color(0xFF15803D),
+                    // Route details
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFE2E8F0))),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('ROUTE DETAILS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 0.5)),
+                          const SizedBox(height: 10),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.trip_origin_rounded, size: 14, color: Color(0xFF0284C7)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(isBuy ? 'Purchase Location / Shop' : 'Pickup Location', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                    Text(order.pickupAddress, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E293B))),
+                                    if (order.pickupPhone != null && order.pickupPhone!.isNotEmpty)
+                                      InkWell(
+                                        onTap: () => _callPhone(order.pickupPhone),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(top: 3),
+                                          child: Text('📞 ${order.pickupPhone}', style: const TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                          const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1, color: Color(0xFFF1F5F9))),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFFEF4444)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Delivery Landmark', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                    Text(order.dropAddress, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E293B))),
+                                    if (order.dropPhone != null && order.dropPhone!.isNotEmpty)
+                                      InkWell(
+                                        onTap: () => _callPhone(order.dropPhone),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(top: 3),
+                                          child: Text('📞 ${order.dropPhone}', style: const TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Contacts: Customer & Rider
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFE2E8F0))),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('CONTACTS & VERIFICATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 0.5)),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Container(padding: const EdgeInsets.all(8), decoration: const BoxDecoration(color: Color(0xFFEFF6FF), shape: BoxShape.circle), child: const Icon(Icons.person_rounded, size: 16, color: Color(0xFF0284C7))),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(order.customerName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                    Text(order.customerPhone, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                  ],
+                                ),
+                              ),
+                              IconButton(icon: const Icon(Icons.phone_rounded, color: Color(0xFF10B981), size: 20), onPressed: () => _callPhone(order.customerPhone), tooltip: 'Call Customer'),
+                            ],
+                          ),
+                          if (order.riderName != null && order.riderName!.isNotEmpty) ...[
+                            const Divider(height: 16, color: Color(0xFFF1F5F9)),
+                            Row(
+                              children: [
+                                Container(padding: const EdgeInsets.all(8), decoration: const BoxDecoration(color: Color(0xFFDCFCE7), shape: BoxShape.circle), child: const Icon(Icons.two_wheeler_rounded, size: 16, color: Color(0xFF15803D))),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(order.riderName!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                      if (order.riderPhone != null) Text(order.riderPhone!, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                    ],
+                                  ),
+                                ),
+                                if (order.riderPhone != null)
+                                  IconButton(icon: const Icon(Icons.phone_rounded, color: Color(0xFF10B981), size: 20), onPressed: () => _callPhone(order.riderPhone), tooltip: 'Call Rider'),
+                              ],
+                            ),
+                          ],
+                          if (order.deliveryPin != null && order.deliveryPin!.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Verification PIN:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                                  Text(order.deliveryPin!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 1.5)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  String _formatFullDateTime(DateTime dt) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final day = dt.day.toString().padLeft(2, '0');
+    final mon = (dt.month >= 1 && dt.month <= 12) ? months[dt.month - 1] : '';
+    final yr = dt.year;
+    final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final min = dt.minute.toString().padLeft(2, '0');
+    return '$day $mon $yr, $hour:$min $period';
   }
 
   String _formatDate(DateTime dt) {

@@ -454,9 +454,18 @@ class _AdminLiveOrdersScreenState extends State<AdminLiveOrdersScreen> {
                     ),
                   ],
                 ),
-                Text(
-                  '₹${order.fare}',
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F172A)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '₹${order.fare}',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F172A)),
+                    ),
+                    Text(
+                      _formatFullDateTime(order.createdAt),
+                      style: const TextStyle(fontSize: 9.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -861,6 +870,43 @@ class _AdminLiveOrdersScreenState extends State<AdminLiveOrdersScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('ORDERED ITEMS & SERVICE', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Color(0xFF0284C7))),
+                          Text(order.category, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                        ],
+                      ),
+                      if (order.orderType == 'BUY_FOR_ME' && order.shopName != null && order.shopName!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text('🏪 Store: ${order.shopName}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0369A1))),
+                      ],
+                      const SizedBox(height: 8),
+                      for (final it in (order.itemsList.isNotEmpty ? order.itemsList : [order.category]))
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF10B981)),
+                              const SizedBox(width: 6),
+                              Expanded(child: Text(it, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)))),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       const Text('CUSTOMER & DROP INFORMATION', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Color(0xFF64748B))),
                       const SizedBox(height: 8),
                       Text('Customer Name: ${order.customerName}', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -914,6 +960,17 @@ class _AdminLiveOrdersScreenState extends State<AdminLiveOrdersScreen> {
     if (diff.inSeconds < 10) return 'Just now';
     if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
     return '${diff.inMinutes}m ago';
+  }
+
+  String _formatFullDateTime(DateTime dt) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final day = dt.day.toString().padLeft(2, '0');
+    final mon = (dt.month >= 1 && dt.month <= 12) ? months[dt.month - 1] : '';
+    final yr = dt.year;
+    final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final min = dt.minute.toString().padLeft(2, '0');
+    return '$day $mon $yr, $hour:$min $period';
   }
 
   String _formatTime(DateTime dt) {

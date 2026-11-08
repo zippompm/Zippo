@@ -103,6 +103,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   Timer? _pickupDebounce;
   Timer? _dropDebounce;
   Timer? _buyDropDebounce;
+  Timer? _undoSnackBarTimer;
 
 
   @override
@@ -145,6 +146,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     _pickupDebounce?.cancel();
     _dropDebounce?.cancel();
     _buyDropDebounce?.cancel();
+    _undoSnackBarTimer?.cancel();
     _primaryPhoneCtrl.dispose();
     _pickupPhoneCtrl.dispose();
     _dropPhoneCtrl.dispose();
@@ -1550,10 +1552,28 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         final List<Map<String, dynamic>> trips = history.map((o) => {
           'orderNumber': o.orderNumber,
           'fare': o.fare,
+          'items': o.itemsList.isNotEmpty ? o.itemsList.join(', ') : (o.category.isNotEmpty ? o.category : 'General Items'),
           'itemsList': o.itemsList,
-          'createdAt': o.createdAt.toIso8601String(),
+          'category': o.category,
+          'orderType': o.orderType,
+          'shopName': o.shopName ?? '',
+          'pickup': o.pickupAddress,
           'pickupAddress': o.pickupAddress,
+          'pickupPhone': o.pickupPhone ?? '',
+          'drop': o.dropAddress,
           'dropAddress': o.dropAddress,
+          'dropPhone': o.dropPhone ?? '',
+          'customerName': o.customerName,
+          'customerPhone': o.customerPhone,
+          'riderName': o.riderName ?? (_loggedInRider?.name ?? ''),
+          'riderPhone': o.riderPhone ?? (_loggedInRider?.phone ?? ''),
+          'completedAt': (o.completedAt ?? o.createdAt).toIso8601String(),
+          'createdAt': o.createdAt.toIso8601String(),
+          'paymentMode': o.paymentMode,
+          'status': o.status,
+          'isCancelled': o.status == 'CANCELLED',
+          'reason': o.cancellationReason ?? '',
+          'deliveryPin': o.deliveryPin,
         }).toList();
         setState(() => _riderCompletedTrips = trips);
         await PreferencesService.setRiderCompletedTrips(
@@ -1624,12 +1644,28 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
       final completedMap = {
         'orderNumber': _riderActiveTrip!.orderNumber,
-        'items': _riderActiveTrip!.itemsList.join(', '),
+        'items': _riderActiveTrip!.itemsList.isNotEmpty ? _riderActiveTrip!.itemsList.join(', ') : _riderActiveTrip!.category,
+        'itemsList': _riderActiveTrip!.itemsList,
+        'category': _riderActiveTrip!.category,
+        'orderType': _riderActiveTrip!.orderType,
+        'shopName': _riderActiveTrip!.shopName ?? '',
         'pickup': _riderActiveTrip!.pickupAddress,
+        'pickupAddress': _riderActiveTrip!.pickupAddress,
+        'pickupPhone': _riderActiveTrip!.pickupPhone ?? '',
         'drop': _riderActiveTrip!.dropAddress,
+        'dropAddress': _riderActiveTrip!.dropAddress,
+        'dropPhone': _riderActiveTrip!.dropPhone ?? '',
+        'customerName': _riderActiveTrip!.customerName,
+        'customerPhone': _riderActiveTrip!.customerPhone,
+        'riderName': _loggedInRider?.name ?? '',
+        'riderPhone': _loggedInRider?.phone ?? '',
         'fare': _riderActiveTrip!.fare,
         'paymentMode': _closingPaymentMode,
         'completedAt': DateTime.now().toIso8601String(),
+        'createdAt': _riderActiveTrip!.createdAt.toIso8601String(),
+        'status': 'DELIVERED',
+        'isCancelled': false,
+        'deliveryPin': _riderActiveTrip!.deliveryPin,
       };
 
       await PreferencesService.saveRiderCompletedTrip(jsonEncode(completedMap));
@@ -1687,7 +1723,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     final now = DateTime.now();
     int total = 0;
     for (final t in _riderCompletedTrips) {
-      final dtStr = t['completedAt'] as String?;
+      final dtStr = (t['completedAt'] ?? t['createdAt']) as String?;
       if (dtStr == null) continue;
       final dt = DateTime.tryParse(dtStr);
       if (dt == null) continue;
@@ -1705,7 +1741,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     final now = DateTime.now();
     int total = 0;
     for (final t in _riderCompletedTrips) {
-      final dtStr = t['completedAt'] as String?;
+      final dtStr = (t['completedAt'] ?? t['createdAt']) as String?;
       if (dtStr == null) continue;
       final dt = DateTime.tryParse(dtStr);
       if (dt == null) continue;
@@ -1724,7 +1760,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     final now = DateTime.now();
 
     for (final trip in trips) {
-      final dateStr = trip['completedAt'] as String?;
+      final dateStr = (trip['completedAt'] ?? trip['createdAt']) as String?;
       DateTime dt = DateTime.now();
       if (dateStr != null) {
         dt = DateTime.tryParse(dateStr) ?? DateTime.now();
@@ -1760,6 +1796,549 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     final period = dt.hour >= 12 ? 'PM' : 'AM';
     final min = dt.minute.toString().padLeft(2, '0');
     return '$hour:$min $period';
+  }
+
+  String _formatFullDateTime(dynamic date) {
+    if (date == null) return '';
+    DateTime? dt;
+    if (date is DateTime) {
+      dt = date;
+    } else if (date is String) {
+      dt = DateTime.tryParse(date);
+    }
+    if (dt == null) return '';
+    final local = dt.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = _monthName(local.month);
+    final year = local.year;
+    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final period = local.hour >= 12 ? 'PM' : 'AM';
+    final min = local.minute.toString().padLeft(2, '0');
+    return '$day $month $year, $hour:$min $period';
+  }
+
+  void _showOrderFullDetailsModal({OrderModel? order, Map<String, dynamic>? trip}) {
+    final orderNum = order?.orderNumber ?? trip?['orderNumber']?.toString() ?? 'N/A';
+    final status = (order?.status ?? trip?['status']?.toString() ?? 'DELIVERED').toUpperCase();
+    final isDelivered = status == 'DELIVERED';
+    final isCancelled = status == 'CANCELLED' || trip?['isCancelled'] == true;
+
+    final fare = order?.fare ?? trip?['fare'] ?? 0;
+    final paymentMode = order?.paymentMode ?? trip?['paymentMode']?.toString() ?? 'Cash';
+    final orderType = order?.orderType ?? trip?['orderType']?.toString() ??
+        ((trip?['shopName'] != null && trip!['shopName'].toString().trim().isNotEmpty) ? 'BUY_FOR_ME' : 'PICKUP_DROP');
+    final isBuy = orderType == 'BUY_FOR_ME';
+    final category = order?.category ?? trip?['category']?.toString() ?? 'Custom';
+    final shopName = order?.shopName ?? trip?['shopName']?.toString() ?? '';
+
+    List<String> items = [];
+    if (order != null && order.itemsList.isNotEmpty) {
+      items = order.itemsList;
+    } else if (trip != null && trip['itemsList'] is List && (trip['itemsList'] as List).isNotEmpty) {
+      items = (trip['itemsList'] as List).map((e) => e.toString()).toList();
+    } else if (trip != null && trip['items'] != null && trip['items'].toString().isNotEmpty) {
+      items = [trip['items'].toString()];
+    } else if (order != null && order.category.isNotEmpty) {
+      items = [order.category];
+    } else {
+      items = ['Standard delivery package'];
+    }
+
+    final pickup = order?.pickupAddress ?? trip?['pickupAddress']?.toString() ?? trip?['pickup']?.toString() ?? (isBuy ? (shopName.isNotEmpty ? shopName : 'Local Market / Store') : 'Melapalayam');
+    final pickupPhone = order?.pickupPhone ?? trip?['pickupPhone']?.toString() ?? '';
+    final drop = order?.dropAddress ?? trip?['dropAddress']?.toString() ?? trip?['drop']?.toString() ?? 'Melapalayam';
+    final dropPhone = order?.dropPhone ?? trip?['dropPhone']?.toString() ?? '';
+    final customerName = order?.customerName ?? trip?['customerName']?.toString() ?? 'Customer';
+    final customerPhone = order?.customerPhone ?? trip?['customerPhone']?.toString() ?? '';
+    final riderName = order?.riderName ?? trip?['riderName']?.toString() ?? (_loggedInRider?.name ?? '');
+    final riderPhone = order?.riderPhone ?? trip?['riderPhone']?.toString() ?? (_loggedInRider?.phone ?? '');
+    final createdAtStr = order != null ? order.createdAt.toIso8601String() : trip?['createdAt']?.toString();
+    final completedAtStr = order?.completedAt != null ? order!.completedAt!.toIso8601String() : trip?['completedAt']?.toString();
+    final cancelReason = order?.cancellationReason ?? trip?['reason']?.toString() ?? '';
+    final deliveryPin = order?.deliveryPin ?? trip?['deliveryPin']?.toString() ?? '';
+
+    Color badgeBg;
+    Color badgeText;
+    String statusTitle;
+    if (isCancelled) {
+      badgeBg = const Color(0xFFFEE2E2);
+      badgeText = const Color(0xFFDC2626);
+      statusTitle = '❌ CANCELLED';
+    } else if (isDelivered) {
+      badgeBg = const Color(0xFFDCFCE7);
+      badgeText = const Color(0xFF15803D);
+      statusTitle = '✅ DELIVERED';
+    } else {
+      badgeBg = const Color(0xFFFEF3C7);
+      badgeText = const Color(0xFFD97706);
+      statusTitle = '⏳ $status';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.90,
+          ),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 44,
+                height: 4.5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.receipt_long_rounded, size: 20, color: Color(0xFF0284C7)),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '#$orderNum',
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A)),
+                            ),
+                            Text(
+                              isBuy ? 'Buy For Me Order' : 'Pick & Deliver Order',
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 20, color: Color(0xFFE2E8F0)),
+
+              // Scrollable Details
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+                  children: [
+                    // Status & Fare Bar
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2)),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: badgeBg,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  statusTitle,
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: badgeText),
+                                ),
+                              ),
+                              if (paymentMode.isNotEmpty && !isCancelled) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  paymentMode == 'UPI' ? '📱 UPI Payment' : '💵 Cash Handover',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
+                                ),
+                              ],
+                            ],
+                          ),
+                          Text(
+                            isCancelled ? '₹0' : '₹$fare',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: isCancelled ? const Color(0xFF94A3B8) : const Color(0xFF15803D),
+                              decoration: isCancelled ? TextDecoration.lineThrough : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Timestamps Card
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        children: [
+                          if (createdAtStr != null && createdAtStr.isNotEmpty)
+                            Row(
+                              children: [
+                                const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF0284C7)),
+                                const SizedBox(width: 8),
+                                const Text('Placed: ', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                                Expanded(
+                                  child: Text(
+                                    _formatFullDateTime(createdAtStr),
+                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (completedAtStr != null && completedAtStr.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.check_circle_outline_rounded, size: 14, color: Color(0xFF15803D)),
+                                const SizedBox(width: 8),
+                                const Text('Delivered: ', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                                Expanded(
+                                  child: Text(
+                                    _formatFullDateTime(completedAtStr),
+                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF15803D)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (isCancelled && cancelReason.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFFDC2626)),
+                                const SizedBox(width: 8),
+                                const Text('Reason: ', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFDC2626))),
+                                Expanded(
+                                  child: Text(
+                                    cancelReason,
+                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFB91C1C)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Items Checklist Section
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(isBuy ? Icons.shopping_basket_rounded : Icons.inventory_2_rounded, size: 16, color: const Color(0xFF0284C7)),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isBuy ? 'ITEMS TO BUY & DELIVER' : 'PACKAGE ITEMS',
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 0.5),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  category,
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (isBuy && shopName.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.storefront_rounded, size: 14, color: Color(0xFF0284C7)),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Store: $shopName',
+                                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF0369A1)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          for (final it in items)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 2),
+                                    child: Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF10B981)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      it,
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Route Locations
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'ROUTE DETAILS',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 0.5),
+                          ),
+                          const SizedBox(height: 10),
+                          // Pickup
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.trip_origin_rounded, size: 14, color: Color(0xFF0284C7)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isBuy ? 'Purchase Location / Shop' : 'Pickup Location',
+                                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                                    ),
+                                    Text(
+                                      pickup,
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                                    ),
+                                    if (pickupPhone.isNotEmpty)
+                                      InkWell(
+                                        onTap: () => _launchPhone(pickupPhone),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(top: 3),
+                                          child: Text('📞 $pickupPhone', style: const TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          ),
+                          // Drop
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFFEF4444)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Delivery Landmark',
+                                      style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                                    ),
+                                    Text(
+                                      drop,
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                                    ),
+                                    if (dropPhone.isNotEmpty)
+                                      InkWell(
+                                        onTap: () => _launchPhone(dropPhone),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(top: 3),
+                                          child: Text('📞 $dropPhone', style: const TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Contacts: Customer & Rider
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'ORDER CONTACTS',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 0.5),
+                          ),
+                          const SizedBox(height: 10),
+                          // Customer
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(color: Color(0xFFEFF6FF), shape: BoxShape.circle),
+                                child: const Icon(Icons.person_rounded, size: 16, color: Color(0xFF0284C7)),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(customerName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                    if (customerPhone.isNotEmpty)
+                                      Text(customerPhone, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                  ],
+                                ),
+                              ),
+                              if (customerPhone.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.phone_rounded, color: Color(0xFF10B981), size: 20),
+                                  onPressed: () => _launchPhone(customerPhone),
+                                  tooltip: 'Call Customer',
+                                ),
+                            ],
+                          ),
+                          if (riderName.isNotEmpty) ...[
+                            const Divider(height: 16, color: Color(0xFFF1F5F9)),
+                            // Rider
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: const BoxDecoration(color: Color(0xFFDCFCE7), shape: BoxShape.circle),
+                                  child: const Icon(Icons.two_wheeler_rounded, size: 16, color: Color(0xFF15803D)),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(riderName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                      if (riderPhone.isNotEmpty)
+                                        Text(riderPhone, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                    ],
+                                  ),
+                                ),
+                                if (riderPhone.isNotEmpty) ...[
+                                  IconButton(
+                                    icon: const Icon(Icons.phone_rounded, color: Color(0xFF10B981), size: 20),
+                                    onPressed: () => _launchPhone(riderPhone),
+                                    tooltip: 'Call Rider',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF25D366), size: 20),
+                                    onPressed: () => _launchWhatsApp(riderPhone, orderNum),
+                                    tooltip: 'WhatsApp Rider',
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                          if (deliveryPin.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Verification PIN:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                                  Text(deliveryPin, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 1.5)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _launchGoogleMaps(String address) async {
@@ -1880,15 +2459,29 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
       final completedMap = {
         'orderNumber': tripToCancel.orderNumber,
-        'items': tripToCancel.itemsList.join(', '),
+        'items': tripToCancel.itemsList.isNotEmpty ? tripToCancel.itemsList.join(', ') : tripToCancel.category,
+        'itemsList': tripToCancel.itemsList,
+        'category': tripToCancel.category,
+        'orderType': tripToCancel.orderType,
+        'shopName': tripToCancel.shopName ?? '',
         'pickup': tripToCancel.pickupAddress,
+        'pickupAddress': tripToCancel.pickupAddress,
+        'pickupPhone': tripToCancel.pickupPhone ?? '',
         'drop': tripToCancel.dropAddress,
+        'dropAddress': tripToCancel.dropAddress,
+        'dropPhone': tripToCancel.dropPhone ?? '',
+        'customerName': tripToCancel.customerName,
+        'customerPhone': tripToCancel.customerPhone,
+        'riderName': _loggedInRider?.name ?? '',
+        'riderPhone': _loggedInRider?.phone ?? '',
         'fare': 0,
         'status': 'CANCELLED',
         'isCancelled': true,
         'reason': selectedReason,
         'paymentMode': 'Cancelled',
         'completedAt': DateTime.now().toIso8601String(),
+        'createdAt': tripToCancel.createdAt.toIso8601String(),
+        'deliveryPin': tripToCancel.deliveryPin,
       };
 
       await PreferencesService.saveRiderCompletedTrip(jsonEncode(completedMap));
@@ -3094,8 +3687,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        _formatTripTime(order.createdAt.toIso8601String()),
-                        style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                        _formatFullDateTime(order.createdAt),
+                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -3371,11 +3964,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
                       ),
                       onPressed: () {
-                        Navigator.pop(modalCtx);
-                        setState(() {
-                          _activeOrder = order;
-                          _showTrackingModal = true;
-                        });
+                        if (isOngoing) {
+                          Navigator.pop(modalCtx);
+                          setState(() {
+                            _activeOrder = order;
+                            _showTrackingModal = true;
+                          });
+                        } else {
+                          _showOrderFullDetailsModal(order: order);
+                        }
                       },
                     ),
                   ),
@@ -3622,6 +4219,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     await PreferencesService.removeInAppNotification(notifId);
 
     if (!mounted) return;
+    _undoSnackBarTimer?.cancel();
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -3645,6 +4243,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           label: 'UNDO',
           textColor: const Color(0xFF22C55E),
           onPressed: () async {
+            _undoSnackBarTimer?.cancel();
             if (index >= 0 && index <= _inAppNotifications.length) {
               _inAppNotifications.insert(index, item);
             } else {
@@ -3656,6 +4255,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         ),
       ),
     );
+    _undoSnackBarTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+    });
   }
 
   // Live In-App Notification Center Drawer
@@ -6455,113 +7059,154 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildRiderPoolOrderCard(OrderModel order) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: order.isUrgent ? const Color(0xFFF59E0B) : const Color(0xFFE2E8F0),
-          width: order.isUrgent ? 1.5 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+    final isBuy = order.orderType == 'BUY_FOR_ME';
+    final itemsSummary = order.itemsList.isNotEmpty ? order.itemsList.join(', ') : order.category;
+
+    return InkWell(
+      onTap: () => _showOrderFullDetailsModal(order: order),
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: order.isUrgent ? const Color(0xFFF59E0B) : const Color(0xFFE2E8F0),
+            width: order.isUrgent ? 1.5 : 1,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(9999),
-                    ),
-                    child: Text(
-                      '#${order.orderNumber}',
-                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
-                    ),
-                  ),
-                  if (order.isUrgent) ...[
-                    const SizedBox(width: 6),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
+                        color: const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(9999),
                       ),
-                      child: const Text('⚡ URGENT',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF92400E))),
+                      child: Text(
+                        '#${order.orderNumber}',
+                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
+                      ),
                     ),
+                    if (order.isUrgent) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(9999),
+                        ),
+                        child: const Text('⚡ URGENT',
+                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF92400E))),
+                      ),
+                    ],
                   ],
-                ],
-              ),
-              Text(
-                'Fee: ₹${order.fare}',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF3A642B)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            order.itemsList.join(', '),
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.trip_origin_rounded, size: 12, color: Color(0xFF0284C7)),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text('From: ${order.pickupAddress}',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-              ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.location_on_rounded, size: 12, color: Color(0xFF76C457)),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text('To: ${order.dropAddress}',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF76C457),
-                foregroundColor: const Color(0xFF0F172A),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                shadowColor: const Color(0xFF76C457).withOpacity(0.45),
-              ),
-              icon: const Icon(Icons.lock_open_rounded, size: 15),
-              label: const Text('Accept & Pick Order', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-              onPressed: () => _atomicClaimOrder(order),
+                ),
+                Text(
+                  'Fee: ₹${order.fare}',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF3A642B)),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            // Category & Placed time
+            Row(
+              children: [
+                Icon(
+                  isBuy ? Icons.shopping_bag_outlined : Icons.inventory_2_outlined,
+                  size: 13,
+                  color: const Color(0xFF64748B),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    isBuy
+                        ? 'Buy For Me (${(order.shopName != null && order.shopName!.isNotEmpty) ? order.shopName : order.category})'
+                        : 'Pick and Deliver (${order.category})',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF0284C7)),
+                  ),
+                ),
+                Text(
+                  _formatFullDateTime(order.createdAt),
+                  style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              itemsSummary,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.trip_origin_rounded, size: 12, color: Color(0xFF0284C7)),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text('From: ${order.pickupAddress}',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.location_on_rounded, size: 12, color: Color(0xFF76C457)),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text('To: ${order.dropAddress}',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Text(
+                  'Tap card for full order checklist & details ▼',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF76C457),
+                  foregroundColor: const Color(0xFF0F172A),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shadowColor: const Color(0xFF76C457).withOpacity(0.45),
+                ),
+                icon: const Icon(Icons.lock_open_rounded, size: 15),
+                label: const Text('Accept & Pick Order', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+                onPressed: () => _atomicClaimOrder(order),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -7018,190 +7663,227 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           ),
           ...entry.value.map(
-            (trip) => Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            '#${trip['orderNumber']}',
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
-                          ),
-                          const SizedBox(width: 8),
-                          Builder(
-                            builder: (ctx) {
-                              final status = (trip['status'] ?? 'DELIVERED').toString().toUpperCase();
-                              final isCancelled = status == 'CANCELLED' || trip['isCancelled'] == true;
-                              final isPending = status == 'PENDING' || status == 'ON_THE_WAY' || status == 'RIDER_ASSIGNED';
-
-                              final badgeColor = isCancelled
-                                  ? const Color(0xFFFEE2E2)
-                                  : isPending
-                                      ? const Color(0xFFFEF3C7)
-                                      : const Color(0xFFE5F6DE);
-                              final badgeTextColor = isCancelled
-                                  ? const Color(0xFFDC2626)
-                                  : isPending
-                                      ? const Color(0xFFD97706)
-                                      : const Color(0xFF3A642B);
-                              final badgeText = isCancelled
-                                  ? '❌ CANCELLED'
-                                  : isPending
-                                      ? '⏳ PENDING'
-                                      : '✅ DELIVERED';
-
-                              return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: badgeColor,
-                                  borderRadius: BorderRadius.circular(9999),
-                                ),
-                                child: Text(
-                                  badgeText,
-                                  style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: badgeTextColor),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      Builder(
-                        builder: (ctx) {
-                          final status = (trip['status'] ?? 'DELIVERED').toString().toUpperCase();
-                          final isCancelled = status == 'CANCELLED' || trip['isCancelled'] == true;
-
-                          return Text(
-                            isCancelled ? '₹0 (Cancelled)' : '+₹${trip['fare']}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: isCancelled ? const Color(0xFFDC2626) : const Color(0xFF3A642B),
-                              decoration: isCancelled ? TextDecoration.lineThrough : null,
+            (trip) => InkWell(
+              onTap: () => _showOrderFullDetailsModal(trip: trip),
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '#${trip['orderNumber']}',
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
                             ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    trip['items'] ?? 'Market Order',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF1E293B)),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined, size: 12, color: Color(0xFF64748B)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          trip['drop'] ?? 'Melapalayam',
-                          style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatTripTime(trip['completedAt']),
-                        style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
-                      ),
-                      Builder(
-                        builder: (ctx) {
-                          final status = (trip['status'] ?? 'DELIVERED').toString().toUpperCase();
-                          final isCancelled = status == 'CANCELLED' || trip['isCancelled'] == true;
-                          final isPending = status == 'PENDING' || status == 'ON_THE_WAY' || status == 'RIDER_ASSIGNED';
+                            const SizedBox(width: 8),
+                            Builder(
+                              builder: (ctx) {
+                                final status = (trip['status'] ?? 'DELIVERED').toString().toUpperCase();
+                                final isCancelled = status == 'CANCELLED' || trip['isCancelled'] == true;
+                                final isPending = status == 'PENDING' || status == 'ON_THE_WAY' || status == 'RIDER_ASSIGNED';
 
-                          if (isCancelled) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEF2F2),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFFECACA)),
-                              ),
-                              child: Text(
-                                trip['reason'] != null ? '⚠️ ${trip['reason']}' : '⚠️ Order Cancelled',
-                                style: const TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFDC2626),
-                                ),
+                                final badgeColor = isCancelled
+                                    ? const Color(0xFFFEE2E2)
+                                    : isPending
+                                        ? const Color(0xFFFEF3C7)
+                                        : const Color(0xFFE5F6DE);
+                                final badgeTextColor = isCancelled
+                                    ? const Color(0xFFDC2626)
+                                    : isPending
+                                        ? const Color(0xFFD97706)
+                                        : const Color(0xFF3A642B);
+                                final badgeText = isCancelled
+                                    ? '❌ CANCELLED'
+                                    : isPending
+                                        ? '⏳ PENDING'
+                                        : '✅ DELIVERED';
+
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: badgeColor,
+                                    borderRadius: BorderRadius.circular(9999),
+                                  ),
+                                  child: Text(
+                                    badgeText,
+                                    style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: badgeTextColor),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        Builder(
+                          builder: (ctx) {
+                            final status = (trip['status'] ?? 'DELIVERED').toString().toUpperCase();
+                            final isCancelled = status == 'CANCELLED' || trip['isCancelled'] == true;
+
+                            return Text(
+                              isCancelled ? '₹0 (Cancelled)' : '+₹${trip['fare']}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                color: isCancelled ? const Color(0xFFDC2626) : const Color(0xFF3A642B),
+                                decoration: isCancelled ? TextDecoration.lineThrough : null,
                               ),
                             );
-                          }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          (trip['orderType'] == 'BUY_FOR_ME' || (trip['shopName'] != null && trip['shopName'].toString().isNotEmpty))
+                              ? Icons.shopping_bag_outlined
+                              : Icons.inventory_2_outlined,
+                          size: 13,
+                          color: const Color(0xFF0284C7),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            (trip['orderType'] == 'BUY_FOR_ME' || (trip['shopName'] != null && trip['shopName'].toString().isNotEmpty))
+                                ? 'Buy For Me (${(trip['shopName'] != null && trip['shopName'].toString().isNotEmpty) ? trip['shopName'] : (trip['category'] ?? 'Market')})'
+                                : 'Pick and Deliver (${trip['category'] ?? 'Custom'})',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Color(0xFF0284C7)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Delivered: ${trip['items'] ?? (trip['itemsList'] is List ? (trip['itemsList'] as List).join(", ") : 'Market Order')}',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Color(0xFF1E293B)),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 12, color: Color(0xFF64748B)),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Drop: ${trip['drop'] ?? trip['dropAddress'] ?? 'Melapalayam'}',
+                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatFullDateTime(trip['completedAt'] ?? trip['createdAt']),
+                          style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                        ),
+                        Builder(
+                          builder: (ctx) {
+                            final status = (trip['status'] ?? 'DELIVERED').toString().toUpperCase();
+                            final isCancelled = status == 'CANCELLED' || trip['isCancelled'] == true;
+                            final isPending = status == 'PENDING' || status == 'ON_THE_WAY' || status == 'RIDER_ASSIGNED';
 
-                          if (isPending) {
+                            if (isCancelled) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF2F2),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFFECACA)),
+                                ),
+                                child: Text(
+                                  trip['reason'] != null ? '⚠️ ${trip['reason']}' : '⚠️ Order Cancelled',
+                                  style: const TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFDC2626),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            if (isPending) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFFBEB),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFFDE68A)),
+                                ),
+                                child: const Text(
+                                  '⏳ In Progress',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFD97706),
+                                  ),
+                                ),
+                              );
+                            }
+
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFFBEB),
+                                color: trip['paymentMode'] == 'UPI'
+                                    ? const Color(0xFFEFF6FF)
+                                    : const Color(0xFFFEF3C7),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFFDE68A)),
+                                border: Border.all(
+                                  color: trip['paymentMode'] == 'UPI'
+                                      ? const Color(0xFFBFDBFE)
+                                      : const Color(0xFFFDE68A),
+                                ),
                               ),
-                              child: const Text(
-                                '⏳ In Progress',
+                              child: Text(
+                                trip['paymentMode'] == 'UPI' ? '📱 UPI Received' : '💵 Cash Handover',
                                 style: TextStyle(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFD97706),
+                                  color: trip['paymentMode'] == 'UPI'
+                                      ? const Color(0xFF1D4ED8)
+                                      : const Color(0xFFB45309),
                                 ),
                               ),
                             );
-                          }
-
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: trip['paymentMode'] == 'UPI'
-                                  ? const Color(0xFFEFF6FF)
-                                  : const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: trip['paymentMode'] == 'UPI'
-                                    ? const Color(0xFFBFDBFE)
-                                    : const Color(0xFFFDE68A),
-                              ),
-                            ),
-                            child: Text(
-                              trip['paymentMode'] == 'UPI' ? '📱 UPI Received' : '💵 Cash Handover',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                                color: trip['paymentMode'] == 'UPI'
-                                    ? const Color(0xFF1D4ED8)
-                                    : const Color(0xFFB45309),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          'Tap to view complete delivery details ▼',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -45,6 +45,7 @@ class OrderModel {
   final double estimatedDistanceKm;
   final String paymentMode; // 'Cash' | 'UPI'
   final DateTime createdAt;
+  final DateTime? completedAt;
   final String? cancellationReason;
 
   OrderModel({
@@ -72,6 +73,7 @@ class OrderModel {
     required this.estimatedDistanceKm,
     this.paymentMode = 'Cash',
     required this.createdAt,
+    this.completedAt,
     this.cancellationReason,
   });
 
@@ -128,6 +130,9 @@ class OrderModel {
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
           : DateTime.now(),
+      completedAt: json['completedAt'] != null
+          ? DateTime.tryParse(json['completedAt'])
+          : null,
       cancellationReason: json['cancellationReason'] ?? json['reason'],
     );
   }

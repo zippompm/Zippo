@@ -59,6 +59,35 @@ const notifyOnlineRiders = async ({ title, body, orderId, orderNumber }) => {
 };
 
 /**
+ * Generates sequential order number in format: odr-DDMMYY-0001
+ * Example: odr-120226-0001
+ */
+const generateOrderNumber = async () => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const mon = String(now.getMonth() + 1).padStart(2, '0');
+  const yr = String(now.getFullYear()).slice(-2);
+  const dateStr = `${day}${mon}${yr}`;
+  const prefix = `odr-${dateStr}-`;
+
+  try {
+    const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
+    const lastOrder = await Order.findOne({ orderNumber: regex }).sort({ createdAt: -1 });
+    let seq = 1;
+    if (lastOrder && lastOrder.orderNumber) {
+      const match = lastOrder.orderNumber.match(/-(\d+)$/);
+      if (match) {
+        seq = parseInt(match[1], 10) + 1;
+      }
+    }
+    return `${prefix}${String(seq).padStart(4, '0')}`;
+  } catch (_) {
+    const fallbackSeq = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
+    return `${prefix}${fallbackSeq}`;
+  }
+};
+
+/**
  * Calculates fare according to the Melapalayam fare engine:
  * Base: ₹30 (first 2 km)
  * Incremental: ₹10/km beyond 2 km
@@ -140,8 +169,10 @@ exports.createOrder = async (req, res) => {
 
     const distance = estimatedDistanceKm ? Number(estimatedDistanceKm) : 2.0;
     const computedFare = calculateFare(distance, Boolean(isUrgent));
+    const orderNumber = await generateOrderNumber();
 
     const order = new Order({
+      orderNumber,
       customerName,
       customerPhone,
       pickupPhone: pickupPhone || customerPhone,
@@ -152,7 +183,7 @@ exports.createOrder = async (req, res) => {
       shopName: shopName || '',
       budget: budget ? Number(budget) : 0,
       isUrgent: Boolean(isUrgent),
-      pickupAddress: pickupAddress || shopName || 'Melapalayam Center',
+      pickupAddress: (pickupAddress && pickupAddress.trim().length > 0) ? pickupAddress.trim() : ((shopName && shopName.trim().length > 0) ? shopName.trim() : 'Melapalayam Center'),
       pickupCoords: pickupCoords || { lat: null, lng: null },
       dropAddress,
       dropCoords: dropCoords || { lat: null, lng: null },
@@ -166,8 +197,10 @@ exports.createOrder = async (req, res) => {
 
     // Broadcast Instant FCM Push Notification to all Online Riders in parallel
     notifyOnlineRiders({
-      title: order.isUrgent ? '⚡ URGENT New Order Available!' : '🛵 New Order Available!',
-      body: `Order #${order.orderNumber} in Melapalayam (₹${order.fare}). Tap to view and accept!`,
+      title: order.isUrgent
+        ? '⚡ URGENT New Order Available!'
+        : (order.orderType === 'BUY_FOR_ME' ? '🛒 New Buy For Me Order!' : '🛵 New Order Available!'),
+      body: `Order #${order.orderNumber} (${order.orderType === 'BUY_FOR_ME' ? `${order.category} from ${order.shopName || 'Market'}` : order.category}) - ₹${order.fare}. Tap to accept!`,
       orderId: order._id,
       orderNumber: order.orderNumber,
     });
@@ -459,7 +492,7 @@ exports.cancelOrder = async (req, res) => {
     const { orderId } = req.params;
     const { reason, phone, isRider, riderId } = req.body;
 
-    const order = await Order.findById(orderId).populate('assignedRider', 'name phone');
+    const order = await Order.findById(orderId).populate('assignedRider', 'name phone fcmToken');
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
@@ -488,16 +521,36 @@ exports.cancelOrder = async (req, res) => {
     order.cancellationReason = reason || (isRiderAction ? 'Closed / Cancelled by rider' : 'Cancelled by customer');
     await order.save();
 
-    // Notify assigned rider if customer cancelled
-    if (!isRiderAction && order.assignedRider && order.assignedRider.fcmToken) {
-      sendMilestoneNotification({
-        token: order.assignedRider.fcmToken,
-        title: '❌ Order Cancelled by Customer',
-        body: `Order #${order.orderNumber} was cancelled by the customer.`,
-        data: { orderId: order._id.toString(), status: 'CANCELLED' },
-        orderId: order._id,
-        recipientPhone: order.assignedRider.phone,
-      }).catch((err) => console.error('[Rider Cancel Alert Error]:', err.message));
+    // Notify ONLY the picked/assigned rider if customer cancelled
+    if (!isRiderAction && order.assignedRider) {
+      try {
+        let riderToken = order.assignedRider.fcmToken;
+        if (!riderToken || riderToken.trim().length < 10) {
+          const fullRider = await Rider.findById(order.assignedRider._id).select('fcmToken phone');
+          if (fullRider && fullRider.fcmToken) riderToken = fullRider.fcmToken;
+        }
+        if (!riderToken && order.assignedRider.phone) {
+          const dev = await Device.findOne({ phone: order.assignedRider.phone, role: 'RIDER', notificationsEnabled: true });
+          if (dev && dev.fcmToken) riderToken = dev.fcmToken;
+        }
+        if (riderToken) {
+          sendMilestoneNotification({
+            token: riderToken,
+            title: '❌ Order Cancelled by Customer',
+            body: `Order #${order.orderNumber} was cancelled by the customer.`,
+            data: {
+              orderId: order._id.toString(),
+              orderNumber: order.orderNumber,
+              status: 'CANCELLED',
+              isRider: 'true',
+            },
+            orderId: order._id,
+            recipientPhone: order.assignedRider.phone,
+          }).catch((err) => console.error('[Rider Cancel Alert Error]:', err.message));
+        }
+      } catch (err) {
+        console.error('[Rider Token Resolution on Cancel Error]:', err.message);
+      }
     }
 
     // Send notification to customer if rider closed the order
