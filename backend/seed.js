@@ -150,6 +150,15 @@ const sampleRiders = [
     totalDeliveries: 0,
     totalEarnings: 0,
   },
+  {
+    name: 'Vishnu G',
+    phone: '7200146003',
+    password: '46003',
+    vehicleNumber: 'Melapalayam Patrol',
+    isOnline: false,
+    totalDeliveries: 0,
+    totalEarnings: 0,
+  },
 ];
 
 const seedRiders = async () => {
