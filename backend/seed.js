@@ -159,6 +159,24 @@ const sampleRiders = [
     totalDeliveries: 0,
     totalEarnings: 0,
   },
+  {
+    name: 'Mariyappan',
+    phone: '6369142659',
+    password: '42659',
+    vehicleNumber: 'Melapalayam Patrol',
+    isOnline: false,
+    totalDeliveries: 0,
+    totalEarnings: 0,
+  },
+  {
+    name: 'Iyyappan',
+    phone: '9894230546',
+    password: '30546',
+    vehicleNumber: 'Melapalayam Patrol',
+    isOnline: false,
+    totalDeliveries: 0,
+    totalEarnings: 0,
+  },
 ];
 
 const seedRiders = async () => {

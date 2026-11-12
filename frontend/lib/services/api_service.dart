@@ -286,6 +286,8 @@ class ApiService {
       '76183': {'id': 'r_mathan', 'name': 'Mathan', 'phone': '9791766183', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0, 'todayOrders': 0, 'cashEarnings': 0, 'upiEarnings': 0},
       '07394': {'id': 'r_raja', 'name': 'RAJA', 'phone': '7695807394', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0, 'todayOrders': 0, 'cashEarnings': 0, 'upiEarnings': 0},
       '46003': {'id': 'r_vishnu_g', 'name': 'Vishnu G', 'phone': '7200146003', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0, 'todayOrders': 0, 'cashEarnings': 0, 'upiEarnings': 0},
+      '42659': {'id': 'r_mariyappan', 'name': 'Mariyappan', 'phone': '6369142659', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0, 'todayOrders': 0, 'cashEarnings': 0, 'upiEarnings': 0},
+      '30546': {'id': 'r_iyyappan', 'name': 'Iyyappan', 'phone': '9894230546', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0, 'todayOrders': 0, 'cashEarnings': 0, 'upiEarnings': 0},
     };
 
     final p = password.trim();
@@ -772,6 +774,8 @@ class ApiService {
       {'id': 'r_mathan', 'name': 'Mathan', 'phone': '9791766183', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0},
       {'id': 'r_raja', 'name': 'RAJA', 'phone': '7695807394', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0},
       {'id': 'r_vishnu_g', 'name': 'Vishnu G', 'phone': '7200146003', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0},
+      {'id': 'r_mariyappan', 'name': 'Mariyappan', 'phone': '6369142659', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0},
+      {'id': 'r_iyyappan', 'name': 'Iyyappan', 'phone': '9894230546', 'isOnline': false, 'totalDeliveries': 0, 'totalEarnings': 0},
     ];
 
     return sampleFleet.map((f) => RiderModel.fromJson(f)).toList();
