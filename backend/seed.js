@@ -177,6 +177,42 @@ const sampleRiders = [
     totalDeliveries: 0,
     totalEarnings: 0,
   },
+  {
+    name: 'Sankar',
+    phone: '7708292647',
+    password: '92647',
+    vehicleNumber: 'Melapalayam Patrol',
+    isOnline: false,
+    totalDeliveries: 0,
+    totalEarnings: 0,
+  },
+  {
+    name: 'Aruna',
+    phone: '8144411373',
+    password: '11373',
+    vehicleNumber: 'Melapalayam Patrol',
+    isOnline: false,
+    totalDeliveries: 0,
+    totalEarnings: 0,
+  },
+  {
+    name: 'Magesh',
+    phone: '6380377190',
+    password: '77190',
+    vehicleNumber: 'Melapalayam Patrol',
+    isOnline: false,
+    totalDeliveries: 0,
+    totalEarnings: 0,
+  },
+  {
+    name: 'Merlin Raja',
+    phone: '6380635767',
+    password: '35767',
+    vehicleNumber: 'Melapalayam Patrol',
+    isOnline: false,
+    totalDeliveries: 0,
+    totalEarnings: 0,
+  },
 ];
 
 const seedRiders = async () => {
