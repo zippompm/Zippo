@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -22,6 +23,15 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/riders', riderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+// Public Policy & Compliance Endpoints (Google Play Store)
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
+app.get('/delete-account', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'delete-account.html'));
+});
 
 // Root Welcome Endpoint
 app.get('/', (req, res) => {

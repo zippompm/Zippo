@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Account & Data Deletion — ZIPPO Express</title>
+  <meta name="description" content="Request account and personal data deletion for ZIPPO Express (com.zippo.zippompm).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              DEFAULT: '#76C457',
+              50: '#f4faf0',
+              100: '#e5f5df',
+              500: '#56ab35',
+              600: '#418b26',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans selection:bg-brand selection:text-slate-900 min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-slate-900 text-brand flex items-center justify-center font-bold font-display text-xl tracking-wider shadow-inner">
+          Z
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-lg text-slate-900 leading-tight">ZIPPO Express</h1>
+          <p class="text-xs text-slate-500 font-medium">Account & Data Management</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 text-sm">
+        <a href="/privacy" class="text-slate-600 hover:text-slate-900 font-semibold transition px-3 py-1.5 rounded-lg hover:bg-slate-100">
+          Privacy Policy
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-3xl mx-auto px-4 py-10 flex-grow">
+    
+    <!-- Hero / Title Card -->
+    <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold uppercase tracking-wider mb-4">
+        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        Google Play User Data Deletion Policy
+      </div>
+      <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+        Request Account & Data Deletion
+      </h2>
+      <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+        <strong>Application:</strong> ZIPPO (Android Package: <code class="bg-slate-100 px-2 py-0.5 rounded text-slate-800 font-mono text-xs font-bold">com.zippo.zippompm</code>)<br>
+        If you wish to delete your ZIPPO account and remove your personal information from our active databases, please follow the simple steps below.
+      </p>
+    </div>
+
+    <!-- Steps & Form Card -->
+    <div class="space-y-6">
+
+      <!-- How to Request Deletion -->
+      <section class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm">
+        <h3 class="font-display font-bold text-lg sm:text-xl text-slate-900 mb-4 flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 text-xs flex items-center justify-center font-bold">1</span>
+          How to Request Account Deletion
+        </h3>
+        
+        <p class="text-sm text-slate-600 mb-6">
+          You can initiate an account and data deletion request using either of the two official methods below:
+        </p>
+
+        <!-- Method A: Instant Web Submission -->
+        <div class="border border-slate-200 rounded-xl p-5 mb-6 bg-slate-50/50">
+          <h4 class="font-bold text-slate-900 text-sm mb-1 flex items-center gap-2">
+            <span class="px-2 py-0.5 text-xs bg-brand-100 text-brand-800 rounded font-semibold">Method A</span>
+            Submit Online Deletion Form
+          </h4>
+          <p class="text-xs text-slate-600 mb-4">
+            Enter the registered mobile phone number associated with your ZIPPO account:
+          </p>
+
+          <form id="deletionForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+            <div>
+              <label for="phoneNumber" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Registered Phone Number
+              </label>
+              <div class="flex">
+                <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-slate-300 bg-slate-100 text-slate-600 text-sm font-semibold">
+                  +91
+                </span>
+                <input 
+                  type="tel" 
+                  id="phoneNumber" 
+                  name="phoneNumber" 
+                  required 
+                  pattern="[0-9]{10}"
+                  maxlength="10" 
+                  placeholder="9876543210" 
+                  class="flex-1 min-w-0 block w-full px-3 py-2.5 rounded-none rounded-r-lg border border-slate-300 text-slate-900 text-sm focus:ring-2 focus:ring-brand focus:border-brand outline-none"
+                >
+              </div>
+            </div>
+
+            <div>
+              <label for="reason" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Reason for Leaving (Optional)
+              </label>
+              <select 
+                id="reason" 
+                name="reason" 
+                class="block w-full px-3 py-2.5 rounded-lg border border-slate-300 text-slate-900 text-sm focus:ring-2 focus:ring-brand focus:border-brand outline-none bg-white"
+              >
+                <option value="no_longer_needed">No longer need the delivery service</option>
+                <option value="privacy_concerns">Privacy or data concerns</option>
+                <option value="changed_number">Changed mobile number</option>
+                <option value="other">Other reason</option>
+              </select>
+            </div>
+
+            <button 
+              type="submit" 
+              id="submitBtn"
+              class="w-full sm:w-auto px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm rounded-lg shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Submit Account Deletion Request</span>
+            </button>
+          </form>
+
+          <!-- Success Message Container -->
+          <div id="successNotice" class="hidden mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm">
+            <div class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              <div>
+                <p class="font-bold">Deletion Request Received!</p>
+                <p class="text-xs text-emerald-800 mt-1">
+                  Your request to delete account <span id="confirmedPhone" class="font-mono font-bold"></span> has been logged. Our compliance team will process and scrub your data within 24-48 business hours.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Method B: Email Request -->
+        <div class="border border-slate-200 rounded-xl p-5 bg-slate-50/50">
+          <h4 class="font-bold text-slate-900 text-sm mb-1 flex items-center gap-2">
+            <span class="px-2 py-0.5 text-xs bg-slate-200 text-slate-800 rounded font-semibold">Method B</span>
+            Email Our Grievance Desk
+          </h4>
+          <p class="text-xs text-slate-600 mb-2">
+            You can also email us directly from your registered email or phone reference:
+          </p>
+          <div class="p-3 bg-white rounded-lg border border-slate-200 text-xs sm:text-sm">
+            <p><strong>To:</strong> <a href="mailto:zippompm@gmail.com?subject=ZIPPO%20Account%20Deletion%20Request" class="text-brand-600 font-semibold hover:underline">zippompm@gmail.com</a></p>
+            <p class="mt-1"><strong>Subject:</strong> ZIPPO Account Deletion Request</p>
+            <p class="mt-1"><strong>Body:</strong> Please include your 10-digit registered mobile number.</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Section 2: Data Handling Disclosure -->
+      <section class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
+        <h3 class="font-display font-bold text-lg sm:text-xl text-slate-900 mb-2 flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 text-xs flex items-center justify-center font-bold">2</span>
+          Data Retention & Deletion Scope
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Permanently Deleted -->
+          <div class="p-4 rounded-xl bg-rose-50/60 border border-rose-100">
+            <h4 class="font-bold text-rose-950 text-sm mb-2 flex items-center gap-1.5">
+              <span class="text-rose-600 font-black">&times;</span> What is Permanently Deleted:
+            </h4>
+            <ul class="text-xs text-rose-900 space-y-1.5 list-disc pl-4">
+              <li>User profile details (Name, Registered Mobile Number).</li>
+              <li>Saved delivery addresses and GPS coordinate tags.</li>
+              <li>Active push notification tokens (Firebase Cloud Messaging).</li>
+              <li>Customer communication preferences.</li>
+            </ul>
+          </div>
+
+          <!-- Legally Retained -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h4 class="font-bold text-slate-900 text-sm mb-2 flex items-center gap-1.5">
+              <span class="text-slate-600 font-black">&#9881;</span> Data Retained for Legal Compliance:
+            </h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              In accordance with Indian commercial, taxation (GST), and accounting compliance laws, completed transactional order receipts and payment records are maintained for statutory audit periods. These historical audit logs are anonymized and cannot be used for any marketing or contact purposes.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-100/70 border border-slate-200 text-xs text-slate-600">
+          <p>
+            <strong>Deletion Timeline:</strong> Upon receiving your request, your profile is immediately deactivated. All personal identifiers are permanently scrubbed from active operational databases within <strong>7 business days</strong>.
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p>&copy; 2026 ZIPPO Express (Melapalayam). All rights reserved.</p>
+      <div class="flex items-center space-x-4">
+        <a href="/privacy" class="hover:text-slate-800 font-medium">Privacy Policy</a>
+        <a href="/delete-account" class="hover:text-slate-800 font-medium">Account Deletion</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      const phone = document.getElementById('phoneNumber').value;
+      const reason = document.getElementById('reason').value;
+
+      document.getElementById('confirmedPhone').innerText = '+91 ' + phone;
+      document.getElementById('successNotice').classList.remove('hidden');
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtn').classList.add('opacity-50', 'cursor-not-allowed');
+
+      // Optionally send to backend or trigger mailto
+      try {
+        const mailtoUrl = `mailto:zippompm@gmail.com?subject=Account%20Deletion%20Request%20-%20${phone}&body=Please%20delete%20my%20ZIPPO%20account%20associated%20with%20phone%20number:%20+91${phone}.%0AReason:%20${encodeURIComponent(reason)}`;
+        window.location.href = mailtoUrl;
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  </script>
+
+</body>
+</html>

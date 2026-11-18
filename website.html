@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth bg-[#F8FAFC]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZIPPO Express — Official Customer Guide & Web Portal | Melapalayam (மேலப்பாளையம்)</title>
+  <meta name="description" content="Complete step-by-step customer guide to ZIPPO: Hyper-local 15-minute errands and express delivery in Melapalayam & Tirunelveli. Learn how to place orders, track live milestones, verify delivery PIN, view history, and manage notifications.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            body: ['"Inter"', 'sans-serif'],
+          },
+          colors: {
+            canvas: '#F8FAFC',
+            card: '#FFFFFF',
+            slateText: '#0F172A',
+            indigoTech: {
+              DEFAULT: '#4F46E5',
+              hover: '#4338CA',
+              light: '#EEF2FF',
+              border: '#C7D2FE',
+            },
+            cyanTech: {
+              DEFAULT: '#06B6D4',
+              hover: '#0891B2',
+              light: '#ECFEFF',
+              border: '#A5F3FC',
+            },
+            zippoGreen: {
+              DEFAULT: '#10B981',
+              brand: '#76C457',
+              light: '#F0FDF4',
+              dark: '#065F46',
+            }
+          },
+          boxShadow: {
+            'bento': '0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 10px 25px -5px rgba(15, 23, 42, 0.04)',
+            'bento-hover': '0 20px 35px -8px rgba(15, 23, 42, 0.08), 0 1px 2px 0 rgba(15, 23, 42, 0.04)',
+            'indigo-glow': '0 10px 25px -4px rgba(79, 70, 229, 0.25)',
+            'green-glow': '0 10px 25px -4px rgba(16, 185, 129, 0.25)',
+          },
+          transitionTimingFunction: {
+            'ease-out-fast': 'cubic-bezier(0, 0, 0.2, 1)',
+          },
+          transitionDuration: {
+            '180': '180ms',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Clean Modern Scrollbar */
+    ::-webkit-scrollbar { width: 7px; }
+    ::-webkit-scrollbar-track { background: #F8FAFC; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4F46E5; }
+
+    /* Bento Card Hover Physics: 180ms ease-out */
+    .bento-card {
+      transition: transform 180ms cubic-bezier(0, 0, 0.2, 1), box-shadow 180ms cubic-bezier(0, 0, 0.2, 1), border-color 180ms cubic-bezier(0, 0, 0.2, 1);
+    }
+    .bento-card:hover {
+      transform: translateY(-3px);
+    }
+
+    /* Subtle Animated Pulse for Live Badge */
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 0.3; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .live-pulse-ring {
+      animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-indigoTech selection:text-white flex flex-col">
+
+  <!-- ========================================================================= -->
+  <!-- 1. STICKY MODERN SAAS NAVBAR (Zoho Clean Slate Style) -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-50 bg-[#FFFFFF]/90 backdrop-blur-md border-b border-slate-200/80 transition-all duration-180">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="#" class="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-indigoTech rounded-xl p-1">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigoTech to-cyanTech flex items-center justify-center shadow-indigo-glow transition-transform duration-180 group-hover:scale-105">
+          <span class="text-white font-black text-xl tracking-wider">Z</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-extrabold text-lg tracking-tight text-slateText">ZIPPO</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zippoGreen-light text-zippoGreen font-body border border-zippoGreen/20">Customer Guide</span>
+          </div>
+          <span class="text-[11px] font-medium text-slate-500 font-body block leading-none">Melapalayam 15-Min Delivery</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="hidden md:flex items-center gap-1 text-sm font-semibold text-slate-600 font-body">
+        <a href="#how-to-order" class="px-3.5 py-2 rounded-lg hover:text-indigoTech hover:bg-slate-100/70 transition-all duration-180">How to Order</a>
+        <a href="#fare-engine" class="px-3.5 py-2 rounded-lg hover:text-indigoTech hover:bg-slate-100/70 transition-all duration-180">Fare & Pricing</a>
+        <a href="#live-tracking" class="px-3.5 py-2 rounded-lg hover:text-indigoTech hover:bg-slate-100/70 transition-all duration-180">Tracking & PIN</a>
+        <a href="#cancellation-rules" class="px-3.5 py-2 rounded-lg hover:text-indigoTech hover:bg-slate-100/70 transition-all duration-180">Cancellation</a>
+        <a href="#history-notifications" class="px-3.5 py-2 rounded-lg hover:text-indigoTech hover:bg-slate-100/70 transition-all duration-180">Notifications & History</a>
+        <a href="#interactive-simulator" class="px-3.5 py-2 rounded-lg text-indigoTech font-bold bg-indigoTech-light border border-indigoTech-border hover:bg-indigoTech hover:text-white transition-all duration-180">Live Simulator</a>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3">
+        <a href="tel:7639483476" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all duration-180">
+          <i data-lucide="phone-call" class="w-3.5 h-3.5 text-indigoTech"></i>
+          <span>Help: 7639483476</span>
+        </a>
+        <a href="#interactive-simulator" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-indigoTech hover:bg-indigoTech-hover shadow-indigo-glow transition-all duration-180 active:scale-95">
+          <i data-lucide="sparkles" class="w-4 h-4 text-cyanTech-light"></i>
+          <span>App Tour</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. HERO SECTION — MODULAR BENTO GRID (Zoho / Clean SaaS Architecture) -->
+  <!-- ========================================================================= -->
+  <section class="pt-8 pb-12 sm:pt-14 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    
+    <!-- Hero Status Pill -->
+    <div class="flex items-center justify-center mb-6">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-xs font-semibold text-slate-700 font-body">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="live-pulse-ring absolute inline-flex h-full w-full rounded-full bg-zippoGreen opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-zippoGreen"></span>
+        </span>
+        <span>Melapalayam & Tirunelveli Active Service</span>
+        <span class="text-slate-300">•</span>
+        <span class="text-indigoTech font-bold">100% Transparent User Guide</span>
+      </div>
+    </div>
+
+    <!-- Main Hero Bento 12-Column Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      
+      <!-- Bento Hero Card 1 (Span 7 Columns): Headline & Core Overview -->
+      <div class="lg:col-span-7 bg-[#FFFFFF] rounded-3xl p-8 sm:p-10 border border-slate-200/90 shadow-bento bento-card flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-indigoTech font-body block mb-2">Customer Experience Walkthrough</span>
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-slateText tracking-tight leading-[1.15] mb-4">
+            Everything You Need to Know About <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigoTech via-cyanTech to-zippoGreen">ZIPPO Delivery</span>
+          </h1>
+          <p class="text-base sm:text-lg text-slate-600 font-body leading-relaxed max-w-2xl mb-6">
+            From placing a grocery run or pickup errand to live 4-stage tracking, secret 4-digit PIN handover, order history, and instant notifications. Clear, visual, and simple.
+          </p>
+
+          <!-- Quick Navigation Tags -->
+          <div class="flex flex-wrap gap-2 pt-1 mb-8">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200">
+              <i data-lucide="package" class="w-3.5 h-3.5 text-indigoTech"></i> Pick & Deliver
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200">
+              <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-cyanTech"></i> Buy For Me
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200">
+              <i data-lucide="key-round" class="w-3.5 h-3.5 text-amber-500"></i> 4-Digit Secure PIN
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200">
+              <i data-lucide="bell" class="w-3.5 h-3.5 text-zippoGreen"></i> Instant Push Alerts
+            </span>
+          </div>
+        </div>
+
+        <!-- CTA Action Bar -->
+        <div class="pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <a href="#how-to-order" class="px-5 py-3 rounded-2xl bg-indigoTech hover:bg-indigoTech-hover text-white text-sm font-bold shadow-indigo-glow transition-all duration-180 inline-flex items-center gap-2">
+              <span>Read Full Step-by-Step</span>
+              <i data-lucide="arrow-down" class="w-4 h-4"></i>
+            </a>
+            <a href="#interactive-simulator" class="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold border border-slate-200 transition-all duration-180 inline-flex items-center gap-2">
+              <i data-lucide="smartphone" class="w-4 h-4 text-indigoTech"></i>
+              <span>Launch Simulator</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 font-body">
+            <i data-lucide="shield-check" class="w-4 h-4 text-zippoGreen"></i>
+            <span>No Account Registration Required</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bento Hero Card 2 (Span 5 Columns): Interactive App Preview Card -->
+      <div class="lg:col-span-5 bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-950 rounded-3xl p-7 text-white shadow-xl bento-card relative overflow-hidden flex flex-col justify-between">
+        <!-- Ambient decorative glow -->
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigoTech rounded-full blur-3xl opacity-30 pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-cyanTech rounded-full blur-3xl opacity-20 pointer-events-none"></div>
+
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-2.5 py-1 rounded-md bg-white/10 text-cyan-300 font-mono text-[11px] font-bold uppercase tracking-wider border border-white/10">App Quick Snapshot</span>
+            <span class="text-xs text-slate-400 font-body font-medium">Guest Mode • Instant PIN</span>
+          </div>
+
+          <h3 class="text-2xl font-black tracking-tight text-white mb-2">Simplicity at Every Tap</h3>
+          <p class="text-slate-300 text-xs font-body leading-relaxed mb-6">
+            Just enter your 10-digit phone number, specify what you need, and your request broadcasts directly to active local riders in Melapalayam.
+          </p>
+
+          <!-- Interactive Snippet Mockup -->
+          <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 space-y-3 font-body text-xs">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-zippoGreen animate-pulse"></span>
+                <span class="font-bold text-white">Order #odr-141126-0001</span>
+              </div>
+              <span class="text-emerald-300 font-black text-sm">₹30</span>
+            </div>
+            <div class="flex items-center justify-between text-slate-300 text-[11px]">
+              <span>Pickup: <strong class="text-white">Periya Theru</strong></span>
+              <span>Drop: <strong class="text-white">Bazaar Market</strong></span>
+            </div>
+            <div class="bg-black/30 rounded-xl p-2.5 flex items-center justify-between">
+              <span class="text-slate-400">Delivery Secret PIN:</span>
+              <span class="font-mono font-black text-base tracking-widest text-cyan-300">8492</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative z-10 pt-6 mt-6 border-t border-white/10 flex items-center justify-between">
+          <span class="text-slate-400 text-xs">Ready in ~15 mins</span>
+          <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Live in Melapalayam
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Essential Metrics Bento Row (Grid 4-Col) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
+      
+      <!-- Metric 1 -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-bento bento-card">
+        <div class="w-9 h-9 rounded-xl bg-indigoTech-light text-indigoTech flex items-center justify-center mb-3">
+          <i data-lucide="badge-percent" class="w-5 h-5"></i>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-slateText mb-1">₹30</div>
+        <div class="text-xs font-bold text-slate-700 mb-0.5">Transparent Base Fare</div>
+        <p class="text-[11px] text-slate-500 font-body">Covers up to 2 km inside Melapalayam. Zero surge fee.</p>
+      </div>
+
+      <!-- Metric 2 -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-bento bento-card">
+        <div class="w-9 h-9 rounded-xl bg-cyanTech-light text-cyanTech flex items-center justify-center mb-3">
+          <i data-lucide="timer" class="w-5 h-5"></i>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-slateText mb-1">~15 Min</div>
+        <div class="text-xs font-bold text-slate-700 mb-0.5">Average Errand Time</div>
+        <p class="text-[11px] text-slate-500 font-body">Rapid local rider dispatch across all Melapalayam wards.</p>
+      </div>
+
+      <!-- Metric 3 -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-bento bento-card">
+        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+          <i data-lucide="shield-check" class="w-5 h-5"></i>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-slateText mb-1">4-Digit PIN</div>
+        <div class="text-xs font-bold text-slate-700 mb-0.5">Zero-Fraud Handover</div>
+        <p class="text-[11px] text-slate-500 font-body">Items are never completed until you verify and share your PIN.</p>
+      </div>
+
+      <!-- Metric 4 -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-bento bento-card">
+        <div class="w-9 h-9 rounded-xl bg-zippoGreen-light text-zippoGreen flex items-center justify-center mb-3">
+          <i data-lucide="bell-ring" class="w-5 h-5"></i>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-slateText mb-1">Instant</div>
+        <div class="text-xs font-bold text-slate-700 mb-0.5">Status Milestones</div>
+        <p class="text-[11px] text-slate-500 font-body">Push alerts for Rider Assigned, Purchased, and On The Way.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 3. SECTION 1: HOW TO PLACE AN ORDER (The Dual Engine Bento Grid) -->
+  <!-- ========================================================================= -->
+  <section id="how-to-order" class="py-14 sm:py-20 bg-slate-50/60 border-t border-slate-200/70">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Header -->
+      <div class="max-w-3xl mb-12">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigoTech-light text-indigoTech text-xs font-bold font-body mb-3">
+          <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+          <span>Step-by-Step Order Placement</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-slateText tracking-tight mb-4">
+          Two Modes for Every Daily Need in Melapalayam
+        </h2>
+        <p class="text-slate-600 font-body text-base">
+          ZIPPO separates errands into two distinct experiences. Switch with one tap between <strong>Pick & Deliver</strong> and <strong>Buy For Me</strong>.
+        </p>
+      </div>
+
+      <!-- 12-Column Asymmetric Bento Grid: Mode Comparison -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        <!-- ========================================================= -->
+        <!-- MODE 1: PICK & DELIVER (Span 6 Cols) -->
+        <!-- ========================================================= -->
+        <div id="pickup-drop" class="lg:col-span-6 bg-white rounded-3xl p-7 sm:p-9 border border-slate-200 shadow-bento bento-card flex flex-col justify-between">
+          <div>
+            <!-- Header Tag -->
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-indigoTech-light text-indigoTech flex items-center justify-center font-bold text-xl">
+                  📦
+                </div>
+                <div>
+                  <h3 class="text-xl font-black text-slateText">Pick & Deliver</h3>
+                  <span class="text-xs font-medium text-slate-500 font-body">பொருளை எடுத்து கொடுக்க (A to B Transfer)</span>
+                </div>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold font-body">Tab 1</span>
+            </div>
+
+            <p class="text-sm text-slate-600 font-body mb-6 leading-relaxed">
+              Use this when you have an item ready at home, office, tailor shop, or pharmacy, and need it transported safely to another location in Melapalayam.
+            </p>
+
+            <!-- Detailed Step-by-Step Inputs Breakdown -->
+            <div class="space-y-4 font-body">
+              
+              <!-- Input 1: Contact Phone -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-xs text-slate-800 mb-1">
+                  <span class="w-5 h-5 rounded-full bg-indigoTech text-white flex items-center justify-center text-[10px]">1</span>
+                  <span>Contact Phone Number (+91)</span>
+                </div>
+                <p class="text-[12px] text-slate-600 pl-7">
+                  Enter your 10-digit mobile number. You can toggle checkboxes for <strong>"I am the Sender"</strong> or <strong>"I am the Receiver"</strong>, or provide a separate pickup/drop phone number.
+                </p>
+              </div>
+
+              <!-- Input 2: Item Category -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-xs text-slate-800 mb-1.5">
+                  <span class="w-5 h-5 rounded-full bg-indigoTech text-white flex items-center justify-center text-[10px]">2</span>
+                  <span>Item Category (6 Options)</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pl-7 mb-2">
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">💊 Medicines</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">🔑 Keys / Docs</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">🛒 Grocery</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">🧵 Tailoring</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">🍱 Lunch / Food</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-indigoTech font-bold">✍️ Custom</span>
+                </div>
+                <p class="text-[11px] text-slate-500 pl-7">
+                  Selecting <strong>Custom</strong> opens an instant text field to type specific instructions (e.g. "Charger & Notebook").
+                </p>
+              </div>
+
+              <!-- Input 3: Pickup Location & GPS -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-xs text-slate-800 mb-1">
+                  <span class="w-5 h-5 rounded-full bg-indigoTech text-white flex items-center justify-center text-[10px]">3</span>
+                  <span>Pickup Address & GPS</span>
+                </div>
+                <p class="text-[12px] text-slate-600 pl-7 mb-2">
+                  Type your address, or tap <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Use GPS 📍</span> for instant autofill. Use quick locality tags like <em>Periya Theru, Bazaar, Santhai, Kuruchi</em>.
+                </p>
+                <div class="pl-7 text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <i data-lucide="x-circle" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span>"Clear address" button available to quickly reset.</span>
+                </div>
+              </div>
+
+              <!-- Input 4: Drop Address -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-xs text-slate-800 mb-1">
+                  <span class="w-5 h-5 rounded-full bg-indigoTech text-white flex items-center justify-center text-[10px]">4</span>
+                  <span>Drop Landmark (Destination)</span>
+                </div>
+                <p class="text-[12px] text-slate-600 pl-7">
+                  Enter where the item should be handed over. The engine automatically detects if destination is within Melapalayam or cross-zone.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
+            <span>Action Button:</span>
+            <span class="font-bold text-indigoTech">"Confirm & Place Order 🛵"</span>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- MODE 2: BUY FOR ME (Span 6 Cols) -->
+        <!-- ========================================================= -->
+        <div id="buy-for-me" class="lg:col-span-6 bg-white rounded-3xl p-7 sm:p-9 border border-slate-200 shadow-bento bento-card flex flex-col justify-between">
+          <div>
+            <!-- Header Tag -->
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-cyanTech-light text-cyanTech flex items-center justify-center font-bold text-xl">
+                  🛒
+                </div>
+                <div>
+                  <h3 class="text-xl font-black text-slateText">Buy For Me</h3>
+                  <span class="text-xs font-medium text-slate-500 font-body">எனக்காக வாங்கி வர (Personal Shopper)</span>
+                </div>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold font-body">Tab 2</span>
+            </div>
+
+            <p class="text-sm text-slate-600 font-body mb-6 leading-relaxed">
+              Have a rider visit local shops, butcher stalls, bazaars, or hotels in Melapalayam to purchase your items and bring them straight to your door.
+            </p>
+
+            <!-- Detailed Step-by-Step Inputs Breakdown -->
+            <div class="space-y-4 font-body">
+              
+              <!-- Input 1: 6 Buy Categories -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-xs text-slate-800 mb-1.5">
+                  <span class="w-5 h-5 rounded-full bg-cyanTech text-white flex items-center justify-center text-[10px]">1</span>
+                  <span>Choose Buy Category (6 Specialized Stalls)</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pl-7 mb-2">
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">🥩 Fresh Meat</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">🥦 Veg / Fruits</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">🛒 Provisions</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">📚 Stationary</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-slate-700">🍱 Hotel Meals</span>
+                  <span class="px-2 py-1 bg-white rounded-lg border text-[11px] font-semibold text-center text-cyanTech font-bold">🛍️ Others</span>
+                </div>
+                <p class="text-[11px] text-slate-500 pl-7">
+                  Each category comes with dynamic item suggestions and localized measurement hints.
+                </p>
+              </div>
+
+              <!-- Input 2: Shop / Stall Name -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-xs text-slate-800 mb-1">
+                  <span class="w-5 h-5 rounded-full bg-cyanTech text-white flex items-center justify-center text-[10px]">2</span>
+                  <span>Shop Name / Market Location</span>
+                </div>
+                <p class="text-[12px] text-slate-600 pl-7">
+                  Enter the specific shop (e.g. <em>"Melapalayam Bazaar Mutton Stall"</em>, <em>"Hameed Bakery"</em>, or <em>"Any Medai medical shop"</em>).
+                </p>
+              </div>
+
+              <!-- Input 3: Items Checklist Textarea -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-xs text-slate-800 mb-1">
+                  <span class="w-5 h-5 rounded-full bg-cyanTech text-white flex items-center justify-center text-[10px]">3</span>
+                  <span>Items Checklist & Quantities</span>
+                </div>
+                <p class="text-[12px] text-slate-600 pl-7 mb-2">
+                  List items with units (e.g., <em>"1 kg Big Onion, 1/2 kg Tomato, 1 Parotta set"</em>). The rider checks these off while purchasing.
+                </p>
+                <div class="pl-7 text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <i data-lucide="info" class="w-3.5 h-3.5 text-cyanTech"></i>
+                  <span>Estimated budget can be communicated directly on handover.</span>
+                </div>
+              </div>
+
+              <!-- Input 4: Drop Address -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-xs text-slate-800 mb-1">
+                  <span class="w-5 h-5 rounded-full bg-cyanTech text-white flex items-center justify-center text-[10px]">4</span>
+                  <span>Your Delivery Address</span>
+                </div>
+                <p class="text-[12px] text-slate-600 pl-7">
+                  Specify your house/street address in Melapalayam for prompt doorstep delivery.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
+            <span>Payment on Doorstep:</span>
+            <span class="font-bold text-cyanTech font-body">Actual Bill + ₹30 Delivery Fee</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 4. SECTION 2: TRANSPARENT FARE ENGINE & URGENT TOGGLE -->
+  <!-- ========================================================================= -->
+  <section id="fare-engine" class="py-14 sm:py-20 bg-white border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="max-w-3xl mb-12">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-50 text-zippoGreen text-xs font-bold font-body mb-3 border border-emerald-200">
+          <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+          <span>Transparent Pricing Formula</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-slateText tracking-tight mb-4">
+          Calculated Upfront. Zero Surprise Surcharges.
+        </h2>
+        <p class="text-slate-600 font-body text-base">
+          Our pricing algorithm is built specifically for Melapalayam's geography with flat base rates and optional emergency priority.
+        </p>
+      </div>
+
+      <!-- Bento 12-Column Grid: Calculator + Policies -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        <!-- Col 1-7: Interactive Fare Calculator Widget -->
+        <div class="lg:col-span-7 bg-[#F8FAFC] rounded-3xl p-7 sm:p-9 border border-slate-200 shadow-bento bento-card flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 font-body">Interactive Calculator</span>
+              <span class="px-2.5 py-1 rounded-md bg-zippoGreen/10 text-zippoGreen text-xs font-bold">Live Formula</span>
+            </div>
+
+            <!-- Distance Slider Control -->
+            <div class="mb-6">
+              <div class="flex justify-between items-center mb-2">
+                <label for="distanceSlider" class="text-xs font-bold text-slate-700 font-body uppercase">Estimated Distance</label>
+                <span id="distanceDisplay" class="text-sm font-black text-indigoTech font-mono">1.8 km (Local Melapalayam)</span>
+              </div>
+              <input type="range" id="distanceSlider" min="0.5" max="8.0" step="0.5" value="1.8" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigoTech">
+              <div class="flex justify-between text-[11px] text-slate-400 font-body mt-1.5">
+                <span>0.5 km (Near)</span>
+                <span>2.0 km (Base Limit)</span>
+                <span>4.8 km (Cross-Zone)</span>
+                <span>8.0 km</span>
+              </div>
+            </div>
+
+            <!-- Urgent Mode Toggle Switch -->
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                  ⚡
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-slateText">Urgent Priority (அவசரம்)</div>
+                  <div class="text-[11px] text-slate-500 font-body">Direct dispatch, no batching, priority pool highlight (+₹15)</div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="urgentCheckbox" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-zippoGreen"></div>
+              </label>
+            </div>
+
+            <!-- Formula Breakdown Callout -->
+            <div class="space-y-2 text-xs font-body text-slate-600 bg-white p-4 rounded-2xl border border-slate-200">
+              <div class="flex justify-between">
+                <span>Base Fare (First 2.0 km):</span>
+                <span class="font-bold text-slateText">₹30</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Distance Surcharge (₹10/km beyond 2 km):</span>
+                <span id="extraKmText" class="font-bold text-slateText">₹0</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Urgent Dispatch Surcharge:</span>
+                <span id="urgentSurchargeText" class="font-bold text-slateText">₹0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Calculation Display -->
+          <div class="mt-6 pt-6 border-t border-slate-200/80 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block font-body">Estimated Delivery Charge</span>
+              <span class="text-[11px] text-slate-500 font-body">Hand over Cash or UPI upon arrival</span>
+            </div>
+            <div class="text-right">
+              <span id="totalFareDisplay" class="text-4xl font-black text-zippoGreen font-mono">₹30</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 8-12: Zero Markup Policy & Legal Safety -->
+        <div class="lg:col-span-5 space-y-6 flex flex-col justify-between">
+          
+          <!-- Card: Handover Payment Methods -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-bento bento-card">
+            <h4 class="text-base font-bold text-slateText mb-3 flex items-center gap-2">
+              <i data-lucide="wallet" class="w-5 h-5 text-indigoTech"></i>
+              <span>Doorstep Payment Freedom</span>
+            </h4>
+            <p class="text-xs text-slate-600 font-body leading-relaxed mb-4">
+              You do not need to prepay online with credit cards. Hand over physical cash or scan the rider's direct UPI QR code when goods are delivered to your hand.
+            </p>
+            <div class="flex gap-2">
+              <span class="px-3 py-1.5 rounded-lg bg-slate-50 border text-xs font-bold text-slate-700">💵 Cash Handover</span>
+              <span class="px-3 py-1.5 rounded-lg bg-slate-50 border text-xs font-bold text-slate-700">📱 UPI QR Scan</span>
+            </div>
+          </div>
+
+          <!-- Card: Safety & Prohibited Items Banner (Legal Warning) -->
+          <div class="bg-amber-50/80 rounded-3xl p-6 border border-amber-200 shadow-sm bento-card">
+            <div class="flex items-center gap-2 text-amber-800 text-xs font-bold uppercase tracking-wider mb-2">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
+              <span>Safety & Legal Regulations</span>
+            </div>
+            <p class="text-xs font-bold text-amber-950 font-body leading-relaxed mb-2">
+              பாதுகாப்பு விதிமுறைகள்: பணம் (Cash), மதுபானம், போதைப்பொருட்கள், அல்லது பில் இல்லாத மருந்துகள் கொண்டு செல்லப்பட மாட்டாது.
+            </p>
+            <p class="text-[11px] text-amber-800 font-body leading-relaxed">
+              ZIPPO riders will strictly decline carrying loose currency, alcohol, banned narcotics, or unbilled prescription drugs. All deliveries are strictly within local Tamil Nadu laws.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 5. SECTION 3: LIVE TRACKING & 4-DIGIT PIN HANDOVER -->
+  <!-- ========================================================================= -->
+  <section id="live-tracking" class="py-14 sm:py-20 bg-slate-50/70 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="max-w-3xl mb-12">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigoTech-light text-indigoTech text-xs font-bold font-body mb-3">
+          <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+          <span>Live Order Tracking</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-slateText tracking-tight mb-4">
+          Real-Time Visibility & 4-Digit Handover PIN
+        </h2>
+        <p class="text-slate-600 font-body text-base">
+          Once your order is placed, an interactive sheet opens. Track your rider's progress through 4 clear milestone stages.
+        </p>
+      </div>
+
+      <!-- Bento 12-Column Grid: Milestones & PIN Feature -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        <!-- Col 1-7: The 4 Milestone Stages -->
+        <div class="lg:col-span-7 bg-white rounded-3xl p-7 sm:p-9 border border-slate-200 shadow-bento bento-card">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 font-body block mb-6">4 Order Status Milestones</span>
+
+          <!-- Stepper Item 1 -->
+          <div class="flex items-start gap-4 pb-6 border-b border-slate-100">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-zippoGreen flex items-center justify-center font-bold text-sm shrink-0">
+              1
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-bold text-slateText">ORDER_PLACED (ஆர்டர் பதிவு செய்யப்பட்டது)</span>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Open Pool</span>
+              </div>
+              <p class="text-xs text-slate-600 font-body leading-relaxed">
+                Your order is registered with sequential ID (e.g. <code class="font-mono font-bold text-indigoTech">#odr-141126-0001</code>). Instant push notification is broadcasted to all online riders in Melapalayam.
+              </p>
+            </div>
+          </div>
+
+          <!-- Stepper Item 2 -->
+          <div class="flex items-start gap-4 py-6 border-b border-slate-100">
+            <div class="w-10 h-10 rounded-2xl bg-indigoTech-light text-indigoTech flex items-center justify-center font-bold text-sm shrink-0">
+              2
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-bold text-slateText">RIDER_ASSIGNED (ரைடர் ஒதுக்கப்பட்டார்)</span>
+                <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-bold">Accepted</span>
+              </div>
+              <p class="text-xs text-slate-600 font-body leading-relaxed mb-2">
+                A verified rider locks and accepts your order. Rider name and phone number appear on your screen immediately.
+              </p>
+              <div class="flex items-center gap-2 text-xs font-bold text-indigoTech">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 border text-slate-700">
+                  <i data-lucide="phone" class="w-3 h-3 text-indigoTech"></i> Tap to Call Rider
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 border text-slate-700">
+                  <i data-lucide="message-square" class="w-3 h-3 text-emerald-600"></i> WhatsApp Ticket
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stepper Item 3 -->
+          <div class="flex items-start gap-4 py-6 border-b border-slate-100">
+            <div class="w-10 h-10 rounded-2xl bg-cyanTech-light text-cyanTech flex items-center justify-center font-bold text-sm shrink-0">
+              3
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-bold text-slateText">ITEM_PURCHASED (பொருட்கள் வாங்கப்பட்டது / எடுக்கப்பட்டது)</span>
+              </div>
+              <p class="text-xs text-slate-600 font-body leading-relaxed">
+                Rider has collected the items from the shop or sender location, packed them safely, and is setting off. (Cancellation locks at this stage).
+              </p>
+            </div>
+          </div>
+
+          <!-- Stepper Item 4 -->
+          <div class="flex items-start gap-4 pt-6">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
+              4
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-bold text-slateText">ON_THE_WAY & DELIVERED (வழியில் உள்ளது & சேர்க்கப்பட்டது)</span>
+              </div>
+              <p class="text-xs text-slate-600 font-body leading-relaxed">
+                Rider is approaching your doorstep. Keep your 4-digit PIN ready to complete verification.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 8-12: The Secret 4-Digit Handover PIN Deep Dive -->
+        <div id="pin-handover" class="lg:col-span-5 bg-gradient-to-b from-slate-900 to-[#0F172A] rounded-3xl p-7 sm:p-9 text-white shadow-xl bento-card flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="px-2.5 py-1 rounded bg-amber-400/20 text-amber-300 font-mono text-xs font-bold uppercase tracking-wider border border-amber-400/30">Anti-Fraud Protection</span>
+              <i data-lucide="lock" class="w-5 h-5 text-amber-400"></i>
+            </div>
+
+            <h3 class="text-2xl font-black tracking-tight mb-3">Your Secret 4-Digit Delivery PIN</h3>
+            <p class="text-xs text-slate-300 font-body leading-relaxed mb-6">
+              Every order generates a unique 4-digit numeric code on your phone. The rider cannot mark the delivery complete without entering this PIN into their app.
+            </p>
+
+            <!-- Large PIN Callout Mockup -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/15 text-center mb-6">
+              <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400 block mb-2">Your Secret PIN (Sample)</span>
+              <div class="font-mono text-4xl sm:text-5xl font-black tracking-widest text-emerald-400 mb-2">
+                7 4 1 9
+              </div>
+              <span class="text-[11px] text-slate-300 block font-body">Share this only after inspecting your items</span>
+            </div>
+
+            <div class="space-y-3 font-body text-xs text-slate-300">
+              <div class="flex items-start gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                <span><strong>Inspect First:</strong> Confirm all medicines, groceries, or packets are intact.</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                <span><strong>Tell PIN Verbally:</strong> Read the 4 digits to the rider.</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <i data-lucide="info" class="w-4 h-4 text-cyan-300 shrink-0 mt-0.5"></i>
+                <span><strong>Emergency Bypass:</strong> If your phone runs out of battery, an emergency bypass protocol is available with supervisor logging.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-white/10 text-center">
+            <span class="text-[11px] text-slate-400 font-body">100% Protection against wrong delivery handover</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 6. SECTION 4: CANCELLATION RULES & POST-DELIVERY FEEDBACK -->
+  <!-- ========================================================================= -->
+  <section id="cancellation-rules" class="py-14 sm:py-20 bg-white border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        <!-- Col 1-6: Cancellation Transparency -->
+        <div class="lg:col-span-6 bg-[#F8FAFC] rounded-3xl p-7 sm:p-9 border border-slate-200 shadow-bento bento-card flex flex-col justify-between">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-rose-50 text-rose-700 text-xs font-bold font-body mb-3 border border-rose-200">
+              <i data-lucide="x-octagon" class="w-3.5 h-3.5"></i>
+              <span>Cancellation Policy</span>
+            </div>
+            <h3 class="text-2xl font-black text-slateText tracking-tight mb-3">When Can You Cancel an Order?</h3>
+            <p class="text-sm text-slate-600 font-body leading-relaxed mb-6">
+              We protect both our customers and riders with fair, common-sense cancellation rules.
+            </p>
+
+            <div class="space-y-4 font-body text-xs">
+              <!-- Free Cancel State -->
+              <div class="p-4 rounded-2xl bg-white border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-emerald-700 mb-1">
+                  <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                  <span>FREE CANCELLATION ALLOWED</span>
+                </div>
+                <p class="text-slate-600 pl-6">
+                  While status is <strong>ORDER_PLACED</strong> or <strong>RIDER_ASSIGNED</strong>. You can freely cancel if plans change.
+                </p>
+              </div>
+
+              <!-- Locked State -->
+              <div class="p-4 rounded-2xl bg-white border border-slate-200">
+                <div class="flex items-center gap-2 font-bold text-rose-700 mb-1">
+                  <i data-lucide="lock" class="w-4 h-4"></i>
+                  <span>CANCELLATION LOCKED</span>
+                </div>
+                <p class="text-slate-600 pl-6">
+                  Once status advances to <strong>ITEM_PURCHASED</strong> or <strong>ON_THE_WAY</strong>. This prevents riders from losing money spent at local stores. Please call the rider directly for urgent changes.
+                </p>
+              </div>
+
+              <!-- Quick Reasons -->
+              <div class="p-4 rounded-2xl bg-white border border-slate-200">
+                <span class="font-bold text-slate-800 block mb-2">4 Quick Cancellation Reasons:</span>
+                <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-700">
+                  <span class="p-1.5 rounded bg-slate-50 border">⏳ Delayed Response</span>
+                  <span class="p-1.5 rounded bg-slate-50 border">❌ Order Delayed</span>
+                  <span class="p-1.5 rounded bg-slate-50 border">🔄 Changed Mind</span>
+                  <span class="p-1.5 rounded bg-slate-50 border">📞 Rider Unavailable</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-slate-200 text-slate-500 text-xs font-body">
+            If a rider closes an order (e.g. shop closed), an explanation dialog pops up on your screen immediately.
+          </div>
+        </div>
+
+        <!-- Col 7-12: 5-Star Feedback Experience -->
+        <div class="lg:col-span-6 bg-white rounded-3xl p-7 sm:p-9 border border-slate-200 shadow-bento bento-card flex flex-col justify-between">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-bold font-body mb-3 border border-amber-200">
+              <i data-lucide="star" class="w-3.5 h-3.5"></i>
+              <span>Customer Voice</span>
+            </div>
+            <h3 class="text-2xl font-black text-slateText tracking-tight mb-3">Post-Delivery Rating Box</h3>
+            <p class="text-sm text-slate-600 font-body leading-relaxed mb-6">
+              After every completed delivery, a clean feedback dialog appears so you can rate your rider and help maintain service excellence.
+            </p>
+
+            <!-- Interactive Rating Mockup -->
+            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-center mb-6">
+              <span class="text-xs font-bold text-slate-500 font-body uppercase tracking-wider block mb-3">How was your delivery?</span>
+              <div class="flex items-center justify-center gap-2 mb-4">
+                <i data-lucide="star" class="w-7 h-7 text-amber-400 fill-amber-400 cursor-pointer"></i>
+                <i data-lucide="star" class="w-7 h-7 text-amber-400 fill-amber-400 cursor-pointer"></i>
+                <i data-lucide="star" class="w-7 h-7 text-amber-400 fill-amber-400 cursor-pointer"></i>
+                <i data-lucide="star" class="w-7 h-7 text-amber-400 fill-amber-400 cursor-pointer"></i>
+                <i data-lucide="star" class="w-7 h-7 text-amber-400 fill-amber-400 cursor-pointer"></i>
+              </div>
+              
+              <!-- Quick Feedback Tags -->
+              <div class="flex flex-wrap justify-center gap-2 text-xs font-semibold text-slate-600 mb-3">
+                <span class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-indigoTech cursor-pointer">⚡ Super Fast</span>
+                <span class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-indigoTech cursor-pointer">🛵 Polite Rider</span>
+                <span class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-indigoTech cursor-pointer">📦 Fresh & Intact</span>
+                <span class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-indigoTech cursor-pointer">🎯 Exact Items</span>
+              </div>
+            </div>
+
+            <div class="text-xs text-slate-600 font-body space-y-2">
+              <div class="flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-zippoGreen"></i>
+                <span>Directly inspected by supervisor desk for continuous quality.</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-zippoGreen"></i>
+                <span>100% optional, dismissible with one tap.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-slate-100 text-slate-400 text-xs font-body">
+            Helps riders earn community recognition and bonuses for great service.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 7. SECTION 5: NOTIFICATIONS & ORDER HISTORY -->
+  <!-- ========================================================================= -->
+  <section id="history-notifications" class="py-14 sm:py-20 bg-slate-50/70 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="max-w-3xl mb-12">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigoTech-light text-indigoTech text-xs font-bold font-body mb-3">
+          <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+          <span>Records & Notifications</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-slateText tracking-tight mb-4">
+          Order History & Smart Green Notifications
+        </h2>
+        <p class="text-slate-600 font-body text-base">
+          All past trips are stored locally on your device with full date and time stamps, plus complete item inspection sheets.
+        </p>
+      </div>
+
+      <!-- Bento 12-Column Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        <!-- Col 1-6: Notification Bell & 3-Second Undo SnackBar -->
+        <div class="lg:col-span-6 bg-white rounded-3xl p-7 sm:p-9 border border-slate-200 shadow-bento bento-card flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="relative w-11 h-11 rounded-2xl bg-emerald-50 text-zippoGreen flex items-center justify-center">
+                  <i data-lucide="bell" class="w-6 h-6"></i>
+                  <!-- Green Unread Dot Indicator -->
+                  <span class="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                </div>
+                <div>
+                  <h3 class="text-lg font-black text-slateText">Green Unread Notification Bell</h3>
+                  <span class="text-xs text-slate-500 font-body">Never miss a status update</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-600 font-body leading-relaxed mb-4">
+              When new delivery updates arrive, the notification icon turns <strong>vibrant green</strong> with an active badge so you can instantly see unread messages.
+            </p>
+
+            <!-- Features List -->
+            <div class="space-y-3 font-body text-xs mb-6">
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                <div>
+                  <strong class="text-slate-800">48-Hour Auto-Purge TTL:</strong>
+                  <p class="text-slate-500 text-[11px]">Notifications clean themselves up automatically after 48 hours to prevent phone clutter.</p>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                <i data-lucide="trash-2" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+                <div>
+                  <strong class="text-slate-800">3-Second Auto-Dismiss Undo SnackBar:</strong>
+                  <p class="text-slate-500 text-[11px]">When you swipe or delete an alert, an "Undo" snackbar appears for exactly 3 seconds and disappears cleanly.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-body">
+            <span>High-Priority System Channel</span>
+            <span class="text-emerald-600 font-bold">Sound & Banner Enabled</span>
+          </div>
+        </div>
+
+        <!-- Col 7-12: Past Trips & Full Checklist Modal -->
+        <div class="lg:col-span-6 bg-white rounded-3xl p-7 sm:p-9 border border-slate-200 shadow-bento bento-card flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-indigoTech-light text-indigoTech flex items-center justify-center">
+                  <i data-lucide="history" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-black text-slateText">Order History & Full Checklist</h3>
+                  <span class="text-xs text-slate-500 font-body">Tap any card for full details</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-600 font-body leading-relaxed mb-4">
+              Your device securely stores every trip locally. Even without network connectivity, you can review past orders, prices paid, and timestamps.
+            </p>
+
+            <!-- Sample History Card Preview -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 font-body text-xs space-y-2 mb-4">
+              <div class="flex items-center justify-between">
+                <span class="font-mono font-bold text-indigoTech text-[11px]">#odr-141126-0001</span>
+                <span class="font-black text-emerald-600 text-sm">₹30</span>
+              </div>
+              <div class="text-[11px] text-slate-700 font-semibold">
+                Buy For Me (Fresh Mutton Curry Cut, 1/2 Kg)
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-200/60">
+                <span>📍 Melapalayam Bazaar ➔ Periya Theru</span>
+                <span class="font-medium text-slate-500">14 Nov 2026, 07:45 PM</span>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-indigoTech font-bold text-center font-body mb-2">
+              ▼ Tapping any past card opens the complete item breakdown & addresses sheet
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-body">
+            <span>Local Persistent Storage</span>
+            <span class="text-indigoTech font-bold">Offline Accessible</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 8. SECTION 6: INTERACTIVE LIVE USER SIMULATOR (The Crown Jewel) -->
+  <!-- ========================================================================= -->
+  <section id="interactive-simulator" class="py-16 sm:py-24 bg-gradient-to-b from-white via-slate-50 to-[#F8FAFC] border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="max-w-3xl mx-auto text-center mb-10">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigoTech-light text-indigoTech text-xs font-bold font-body mb-3">
+          <i data-lucide="play-circle" class="w-3.5 h-3.5"></i>
+          <span>Live Interactive App Simulator</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-slateText tracking-tight mb-3">
+          Experience the Customer Screen Right Here
+        </h2>
+        <p class="text-slate-600 font-body text-sm sm:text-base">
+          Click through the tabs below to test every screen flow exactly as it works inside the installed Android APK.
+        </p>
+      </div>
+
+      <!-- Simulator Device Frame (Zoho-Style Elevation) -->
+      <div class="max-w-xl mx-auto bg-white rounded-[36px] border-4 border-slate-800 p-4 sm:p-6 shadow-2xl relative">
+        
+        <!-- Phone Camera Notch / Status bar -->
+        <div class="flex items-center justify-between px-3 py-1.5 mb-3 border-b border-slate-100 text-[11px] font-mono text-slate-500 font-bold">
+          <span>09:41</span>
+          <div class="w-20 h-4 bg-slate-800 rounded-full mx-auto"></div>
+          <div class="flex items-center gap-1">
+            <i data-lucide="wifi" class="w-3 h-3"></i>
+            <i data-lucide="battery-charging" class="w-3.5 h-3.5"></i>
+          </div>
+        </div>
+
+        <!-- Simulator Screen Switcher Tabs -->
+        <div class="grid grid-cols-4 gap-1 p-1 bg-slate-100 rounded-2xl mb-4 text-[11px] font-bold font-body">
+          <button onclick="setSimTab('order')" id="tabBtn-order" class="py-2 rounded-xl bg-white shadow-sm text-indigoTech transition-all duration-180">
+            1. Order
+          </button>
+          <button onclick="setSimTab('track')" id="tabBtn-track" class="py-2 rounded-xl text-slate-600 hover:text-slate-900 transition-all duration-180">
+            2. Track
+          </button>
+          <button onclick="setSimTab('pin')" id="tabBtn-pin" class="py-2 rounded-xl text-slate-600 hover:text-slate-900 transition-all duration-180">
+            3. PIN Handover
+          </button>
+          <button onclick="setSimTab('history')" id="tabBtn-history" class="py-2 rounded-xl text-slate-600 hover:text-slate-900 transition-all duration-180">
+            4. History
+          </button>
+        </div>
+
+        <!-- Simulator Screen Content Area -->
+        <div class="min-h-[460px] bg-slate-50 rounded-2xl p-4 border border-slate-200 font-body text-xs flex flex-col justify-between">
+          
+          <!-- Screen 1: Order Form Simulation -->
+          <div id="simScreen-order" class="space-y-3">
+            <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200">
+              <span class="font-bold text-slateText">ZIPPO Delivery (Melapalayam)</span>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">🟢 Riders Online</span>
+            </div>
+
+            <!-- Mode selector -->
+            <div class="grid grid-cols-2 gap-2 bg-slate-200/80 p-1 rounded-xl">
+              <button class="py-1.5 rounded-lg bg-white shadow-xs font-bold text-indigoTech">📦 Pick & Deliver</button>
+              <button class="py-1.5 rounded-lg text-slate-600 font-medium">🛒 Buy For Me</button>
+            </div>
+
+            <!-- Mobile Phone Input -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Customer Phone</label>
+              <div class="flex items-center gap-2 font-mono font-bold text-slate-800">
+                <span class="text-slate-400">+91</span>
+                <span>98765 43210</span>
+              </div>
+            </div>
+
+            <!-- Category Chips -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Category</label>
+              <div class="grid grid-cols-3 gap-1.5 text-[11px] font-semibold text-center">
+                <span class="p-1.5 rounded bg-indigoTech text-white">💊 Medicine</span>
+                <span class="p-1.5 rounded bg-slate-50 border text-slate-600">🔑 Keys</span>
+                <span class="p-1.5 rounded bg-slate-50 border text-slate-600">🛒 Grocery</span>
+              </div>
+            </div>
+
+            <!-- Addresses -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <div class="flex justify-between items-center text-[11px]">
+                <span class="text-slate-500">From: Periya Theru Big Mosque</span>
+                <span class="text-emerald-600 font-bold">GPS 📍</span>
+              </div>
+              <div class="border-t border-slate-100 pt-1 text-[11px] text-slate-500">
+                <span>To: Melapalayam Santhai Market</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 text-white p-3.5 rounded-xl flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-slate-400 block uppercase">Fare</span>
+                <span class="text-lg font-black text-emerald-400">₹30</span>
+              </div>
+              <button onclick="setSimTab('track')" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-black text-xs transition">
+                Confirm & Place Order 🛵
+              </button>
+            </div>
+          </div>
+
+          <!-- Screen 2: Live Tracking Simulation -->
+          <div id="simScreen-track" class="space-y-3 hidden">
+            <div class="bg-indigoTech text-white p-3 rounded-xl flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-indigo-200 block uppercase">Active Order</span>
+                <span class="font-mono font-black text-sm">#odr-141126-0001</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold">RIDER_ASSIGNED</span>
+            </div>
+
+            <!-- Rider Card -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    🛵
+                  </div>
+                  <div>
+                    <span class="font-bold text-slateText text-sm block">V Mani</span>
+                    <span class="text-[10px] text-slate-500">7639483476</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1">
+                  <a href="tel:7639483476" class="px-2.5 py-1 rounded bg-slate-100 text-indigoTech font-bold text-[10px] border">Call</a>
+                  <button class="px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">Chat</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Milestones Progress -->
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+              <div class="flex items-center gap-2 text-emerald-600 font-bold">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>Order Placed (07:40 PM)</span>
+              </div>
+              <div class="flex items-center gap-2 text-indigoTech font-bold">
+                <i data-lucide="radio" class="w-4 h-4 animate-pulse"></i>
+                <span>Rider Accepted & Heading to Spot</span>
+              </div>
+              <div class="flex items-center gap-2 text-slate-400 font-medium">
+                <i data-lucide="circle" class="w-4 h-4"></i>
+                <span>Item Purchased / Picked Up</span>
+              </div>
+              <div class="flex items-center gap-2 text-slate-400 font-medium">
+                <i data-lucide="circle" class="w-4 h-4"></i>
+                <span>Out for Delivery</span>
+              </div>
+            </div>
+
+            <button onclick="setSimTab('pin')" class="w-full py-2.5 bg-indigoTech text-white font-bold rounded-xl text-center">
+              View Delivery Secret PIN ➔
+            </button>
+          </div>
+
+          <!-- Screen 3: PIN Handover Simulation -->
+          <div id="simScreen-pin" class="space-y-4 text-center hidden">
+            <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-amber-900 text-xs font-semibold">
+              Rider is at your doorstep! Share PIN to complete.
+            </div>
+
+            <div class="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 space-y-2">
+              <span class="text-xs uppercase tracking-widest text-slate-400 block font-mono">Your 4-Digit Delivery PIN</span>
+              <div class="font-mono text-5xl font-black text-emerald-400 tracking-widest py-2">
+                8 4 9 2
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Tell this code verbally to rider <strong>V Mani</strong>
+              </p>
+            </div>
+
+            <div class="p-3 bg-white rounded-xl border text-slate-600 text-[11px] leading-relaxed">
+              Once the rider inputs <code class="font-bold text-slate-900">8492</code> into their APK, the order status completes automatically and feedback pops up.
+            </div>
+
+            <button onclick="setSimTab('history')" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-center">
+              Simulate Delivery Success & View History ➔
+            </button>
+          </div>
+
+          <!-- Screen 4: History & Notification Tray -->
+          <div id="simScreen-history" class="space-y-3 hidden">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-800">Order History (Past Trips)</span>
+              <span class="text-xs text-indigoTech font-semibold">Offline Saved</span>
+            </div>
+
+            <!-- Card 1 -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-slate-800">#odr-141126-0001</span>
+                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">DELIVERED</span>
+              </div>
+              <div class="text-[11px] text-slate-600">Medicine & Pharmacy Pack</div>
+              <div class="text-[10px] text-slate-400 flex justify-between">
+                <span>Periya Theru ➔ Santhai</span>
+                <span>Fee: ₹30 • 14 Nov 2026</span>
+              </div>
+            </div>
+
+            <!-- In-App Notification SnackBar Simulation -->
+            <div class="bg-slate-900 text-white p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                <span class="text-[11px]">Notification deleted</span>
+              </div>
+              <span class="text-emerald-300 font-bold text-[11px]">Undo (3s)</span>
+            </div>
+
+            <button onclick="setSimTab('order')" class="w-full py-2 bg-slate-200 text-slate-700 font-bold rounded-xl text-center">
+              ↺ Start Simulator Over
+            </button>
+          </div>
+
+          <!-- Persistent Helper text at bottom of phone -->
+          <div class="text-center text-[10px] text-slate-400 border-t border-slate-200/60 pt-2 font-mono">
+            ZIPPO Customer Screen Simulation • Melapalayam v2.4
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 9. SECTION 7: FREQUENTLY ASKED QUESTIONS (Accordion) -->
+  <!-- ========================================================================= -->
+  <section class="py-14 sm:py-20 bg-white border-t border-slate-200">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-black text-slateText tracking-tight mb-2">Customer Questions & Answers</h2>
+        <p class="text-sm text-slate-500 font-body">Everything you need to know about using ZIPPO in Melapalayam.</p>
+      </div>
+
+      <div class="space-y-4 font-body">
+        
+        <!-- FAQ 1 -->
+        <details class="group bg-slate-50 rounded-2xl p-5 border border-slate-200 [&_summary::-webkit-details-marker]:hidden">
+          <summary class="flex items-center justify-between font-bold text-slate-900 cursor-pointer text-sm">
+            <span>Do I need to create an account or password to place an order?</span>
+            <span class="transition group-open:rotate-180">
+              <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i>
+            </span>
+          </summary>
+          <p class="mt-3 text-xs text-slate-600 leading-relaxed border-t border-slate-200/60 pt-3">
+            No! ZIPPO operates in guest customer mode. All you need is your valid 10-digit mobile number so the assigned rider can call you to confirm your location.
+          </p>
+        </details>
+
+        <!-- FAQ 2 -->
+        <details class="group bg-slate-50 rounded-2xl p-5 border border-slate-200 [&_summary::-webkit-details-marker]:hidden">
+          <summary class="flex items-center justify-between font-bold text-slate-900 cursor-pointer text-sm">
+            <span>How much does delivery cost? Are there hidden convenience fees?</span>
+            <span class="transition group-open:rotate-180">
+              <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i>
+            </span>
+          </summary>
+          <p class="mt-3 text-xs text-slate-600 leading-relaxed border-t border-slate-200/60 pt-3">
+            There are zero convenience fees and zero commission markups. Base fare is flat ₹30 covering the first 2 km inside Melapalayam, plus ₹10/km for extra distance. If you toggle "Urgent Priority", ₹15 is added for instant, dedicated non-batched delivery.
+          </p>
+        </details>
+
+        <!-- FAQ 3 -->
+        <details class="group bg-slate-50 rounded-2xl p-5 border border-slate-200 [&_summary::-webkit-details-marker]:hidden">
+          <summary class="flex items-center justify-between font-bold text-slate-900 cursor-pointer text-sm">
+            <span>What if the item in Buy For Me is out of stock at the shop?</span>
+            <span class="transition group-open:rotate-180">
+              <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i>
+            </span>
+          </summary>
+          <p class="mt-3 text-xs text-slate-600 leading-relaxed border-t border-slate-200/60 pt-3">
+            The assigned rider will call your phone directly from the shop to ask for a substitute, or close the order with a clear note. If closed, you receive an immediate alert and pay nothing.
+          </p>
+        </details>
+
+        <!-- FAQ 4 -->
+        <details class="group bg-slate-50 rounded-2xl p-5 border border-slate-200 [&_summary::-webkit-details-marker]:hidden">
+          <summary class="flex items-center justify-between font-bold text-slate-900 cursor-pointer text-sm">
+            <span>How do I contact customer care or supervisor support?</span>
+            <span class="transition group-open:rotate-180">
+              <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i>
+            </span>
+          </summary>
+          <p class="mt-3 text-xs text-slate-600 leading-relaxed border-t border-slate-200/60 pt-3">
+            You can call our Melapalayam supervisor directly at <strong>7639483476</strong> or <strong>6379329930</strong>, or tap the WhatsApp button inside your order tracking sheet.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 10. SAAS FOOTER (Zoho Clean Tech Slate Architecture) -->
+  <!-- ========================================================================= -->
+  <footer class="bg-[#0F172A] text-slate-400 font-body text-xs border-t border-slate-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+        
+        <!-- Brand Info -->
+        <div class="md:col-span-2 space-y-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigoTech flex items-center justify-center text-white font-black">Z</div>
+            <span class="font-extrabold text-white text-base font-sans tracking-tight">ZIPPO Delivery</span>
+          </div>
+          <p class="text-slate-400 text-xs leading-relaxed max-w-sm">
+            Melapalayam's official hyper-local 15-minute express errands and personal shopper engine. Serving Periya Theru, Bazaar, Santhai, Medai, Hameedpuram, and surrounding areas.
+          </p>
+          <div class="text-[11px] text-slate-500">
+            Support Helpline: <strong class="text-slate-300">7639483476 / 6379329930</strong>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="space-y-2">
+          <span class="text-white font-bold text-xs uppercase tracking-wider block font-sans mb-3">Customer Guides</span>
+          <ul class="space-y-1.5">
+            <li><a href="#pickup-drop" class="hover:text-white transition">Pick & Deliver Guide</a></li>
+            <li><a href="#buy-for-me" class="hover:text-white transition">Buy For Me Guide</a></li>
+            <li><a href="#fare-engine" class="hover:text-white transition">Fare Engine & Formula</a></li>
+            <li><a href="#live-tracking" class="hover:text-white transition">Live Milestone Tracking</a></li>
+            <li><a href="#pin-handover" class="hover:text-white transition">4-Digit Delivery PIN</a></li>
+          </ul>
+        </div>
+
+        <!-- Local Melapalayam Service Coverage -->
+        <div class="space-y-2">
+          <span class="text-white font-bold text-xs uppercase tracking-wider block font-sans mb-3">Service Areas</span>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Periya Theru • Melapalayam Bazaar • Santhai Market • Kuruchi • Hameedpuram • VST Pallivasal • Medai • Tirunelveli Junction & Town Cross-Zone.
+          </p>
+          <div class="pt-2 text-emerald-400 font-bold text-[11px] flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>Riders Active Now</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
+        <div>
+          © 2026 ZIPPO Express (Melapalayam). All rights reserved.
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="#how-to-order" class="hover:text-slate-400 transition">Customer Privacy Policy</a>
+          <span>•</span>
+          <a href="#fare-engine" class="hover:text-slate-400 transition">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- INTERACTIVE SCRIPT (Simulator, Fare Slider, Lucide Init) -->
+  <!-- ========================================================================= -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // 1. Interactive Fare Slider Logic
+    const distanceSlider = document.getElementById('distanceSlider');
+    const distanceDisplay = document.getElementById('distanceDisplay');
+    const urgentCheckbox = document.getElementById('urgentCheckbox');
+    const extraKmText = document.getElementById('extraKmText');
+    const urgentSurchargeText = document.getElementById('urgentSurchargeText');
+    const totalFareDisplay = document.getElementById('totalFareDisplay');
+
+    function calculateInteractiveFare() {
+      const distance = parseFloat(distanceSlider.value);
+      const isUrgent = urgentCheckbox.checked;
+
+      // Base fare: ₹30 up to 2.0 km
+      const baseFare = 30;
+      const extraKm = Math.max(0, distance - 2.0);
+      const distanceFare = Math.round(extraKm * 10);
+      const urgentSurcharge = isUrgent ? 15 : 0;
+      const total = baseFare + distanceFare + urgentSurcharge;
+
+      distanceDisplay.textContent = `${distance.toFixed(1)} km (${distance > 3.0 ? 'Cross-Zone' : 'Local Melapalayam'})`;
+      extraKmText.textContent = `₹${distanceFare}`;
+      urgentSurchargeText.textContent = `₹${urgentSurcharge}`;
+      totalFareDisplay.textContent = `₹${total}`;
+    }
+
+    if (distanceSlider && urgentCheckbox) {
+      distanceSlider.addEventListener('input', calculateInteractiveFare);
+      urgentCheckbox.addEventListener('change', calculateInteractiveFare);
+    }
+
+    // 2. Interactive Phone Simulator Tab Switching
+    function setSimTab(tab) {
+      const screens = ['order', 'track', 'pin', 'history'];
+      screens.forEach(s => {
+        const screenEl = document.getElementById(`simScreen-${s}`);
+        const btnEl = document.getElementById(`tabBtn-${s}`);
+        if (screenEl && btnEl) {
+          if (s === tab) {
+            screenEl.classList.remove('hidden');
+            btnEl.classList.add('bg-white', 'shadow-sm', 'text-indigoTech');
+            btnEl.classList.remove('text-slate-600');
+          } else {
+            screenEl.classList.add('hidden');
+            btnEl.classList.remove('bg-white', 'shadow-sm', 'text-indigoTech');
+            btnEl.classList.add('text-slate-600');
+          }
+        }
+      });
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
+
